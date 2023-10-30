@@ -17,11 +17,16 @@ var app = new Framework7({
       {path: '/about/', url: 'about.html'},
       {path: '/login/', url: 'login.html'},
       {path: '/index/', url: 'index.html'},
+      {path: '/registro/', url: 'registro.html'},
+
     ]
     // ... other parameters
   });
 
 var mainView = app.views.create('.view-main');
+var db = firebase.firestore();
+var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario;
+var coleccionUsuarios = db.collection("Usuarios");
 
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
@@ -39,6 +44,10 @@ $$(document).on('page:init', '.page[data-name="index"]', function (e) {
   $$("#btnRegistro").on("click", funcionRegistro);
 })
 
+$$(document).on('page:init', '.page[data-name="registro"]', function (e) {
+  $$("#btnFinalizarRegistro").on("click", funcionFinRegistro);
+})
+
 $$(document).on('page:init', '.page[data-name="login"]', function (e) {
   $$("#btnLogin").on("click", funcionLogin);
 })
@@ -53,7 +62,6 @@ $$(document).on('page:init', '.page[data-name="about"]', function (e) {
 
 
 // FUNCIONES
-
 function funcionRegistro () {
   email = $$("#emailIndex").val();
   contrasena = $$("#contrasenaIndex").val();
@@ -65,7 +73,7 @@ function funcionRegistro () {
       var user = userCredential.user;
       console.log("Bienvenid@!!! " + email);
       // ...
-      // mainView.router.navigate('/registro/');
+      mainView.router.navigate('/registro/');
     })
     .catch((error) => {
       var errorCode = error.code;
@@ -78,6 +86,26 @@ function funcionRegistro () {
         // ..
     });
   }
+}
+
+function funcionFinRegistro () {
+  nombre = $$("#nombreRegistro").val();
+  apellido = $$("#apellidoRegistro").val();
+  telefono = $$("#telefonoRegistro").val();
+  // fechaNacimiento = $$("#fechaNcimientoRegistro").val();
+  tipoUsuario = $$("#tipoUsuarioRegistro").val();
+
+  datos = {nombre: nombre, apellido: apellido, telefono: telefono, rol: tipoUsuario};
+  idUsuario = email;
+
+  coleccionUsuarios.doc(idUsuario).set(datos)
+  .then(function (documento) {
+    alert("Registración exitosa");
+    mainView.router.navigate("/login/");
+  })
+  .catch( function (error) {
+    console.log("Error " + error);
+  })
 }
 
 function funcionLogin () {
