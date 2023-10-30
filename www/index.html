@@ -23,7 +23,7 @@
     <meta name="color-scheme" content="light dark">
 
     <!-- Your app title -->
-    <title>My App</title>
+    <title>Lambda Manager</title>
     <!-- Path to Framework7 Library CSS -->
     <link rel="stylesheet" href="lib/framework7/framework7-bundle.css">
     <!-- Path to icons -->
@@ -66,8 +66,47 @@
                     <div class="block">
                         
                         <!-- CONTENIDO DEMO -->
-                        
-                        <p>Page content goes here</p>
+                        <h2>Registro</h2>
+                        <div class="grid grid-cols-1 grid-gap">
+                            <div class="list list-strong-ios list-dividers-ios inset-ios">
+                                <ul>
+                                  <li class="item-content item-input item-input-with-info">
+                                    <div class="item-media">
+                                      <i class="icon demo-list-icon"></i>
+                                    </div>
+                                    <div class="item-inner">
+                                        <div class="item-title item-label">Email</div>
+                                        <div class="item-input-wrap">
+                                          <input type="email" id="emailIndex" placeholder="Email" required validate>
+                                          <span class="input-clear-button"></span>
+                                          <div class="item-input-info">Validación de e-mail</div>
+                                        </div>
+                                    </div>
+                                  </li>
+                                  <li class="item-content item-input">
+                                    <div class="item-media">
+                                      <i class="icon demo-list-icon"></i>
+                                    </div>
+                                    <div class="item-inner">
+                                      <div class="item-input-wrap">
+                                        <input type="password" id="contrasenaIndex" placeholder="Contraseña">
+                                        <span class="input-clear-button"></span>
+                                      </div>
+                                    </div>
+                                  </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 grid-gap">
+                            <div>
+                                <button id="btnRegistro" class="button button-raised button-fill">Registrarme</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 grid-gap">
+                            <div>
+                                <a href="/login/" class="button button-raised button-fill">Quiero iniciar sesión</a>
+                            </div>
+                        </div>
                         <!-- Link to another page -->
                         <a href="/about/">About app</a>
 
@@ -106,6 +145,28 @@
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-auth.js"></script>
+    
+    <!-- 
+        <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-firestore.js"></script>
+    -->
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFKuW4gWUYOfofUhW7hIHx1R7jTyGV958",
+            authDomain: "lambda-manager-71806.firebaseapp.com",
+            projectId: "lambda-manager-71806",
+            storageBucket: "lambda-manager-71806.appspot.com",
+            messagingSenderId: "566464167975",
+            appId: "1:566464167975:web:c504ce8a0e727c582e8e02"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+  
 
     <script type="text/javascript" src="cordova.js"></script>
     <script type="text/javascript" src="lib/framework7/framework7-bundle.min.js"></script>
