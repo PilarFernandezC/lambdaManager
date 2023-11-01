@@ -18,7 +18,11 @@ var app = new Framework7({
       {path: '/login/', url: 'login.html'},
       {path: '/index/', url: 'index.html'},
       {path: '/registro/', url: 'registro.html'},
-
+      {path: '/coordinador/', url: 'coordinador.html'},
+      {path: '/alumno/', url: 'alumno.html'},
+      {path: '/entrenador/', url: 'entrenador.html'},
+      {path: '/coordinador/altaAlumno', url: 'altaAlumno.html'},
+      {path: '/coordinador/altaEntrenador', url: 'altaEntrenador.html'},
     ]
     // ... other parameters
   });
@@ -50,6 +54,29 @@ $$(document).on('page:init', '.page[data-name="registro"]', function (e) {
 
 $$(document).on('page:init', '.page[data-name="login"]', function (e) {
   $$("#btnLogin").on("click", funcionLogin);
+})
+
+$$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
+  mostrarAlumnos();
+  mostrarEntrenadores();
+  $$("#btnAltaAlumno").on("click", funcionDirigirseAlumno);
+  $$("#btnAltaEntrenador").on("click", funcionDirigirseEntrenador);
+})
+
+$$(document).on('page:init', '.page[data-name="altaAlumno"]', function (e) {
+  $$("#btnFinalizarAltaAlumno").on("click", funcionCrearAlumno);
+})
+
+$$(document).on('page:init', '.page[data-name="altaEntrenador"]', function (e) {
+  $$("#btnFinalizarAltaEntrenador").on("click", funcionCrearEntrenador);
+})
+
+$$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
+  
+})
+
+$$(document).on('page:init', '.page[data-name="entrenador"]', function (e) {
+  
 })
 
 $$(document).on('page:init', '.page[data-name="about"]', function (e) {
@@ -92,10 +119,10 @@ function funcionFinRegistro () {
   nombre = $$("#nombreRegistro").val();
   apellido = $$("#apellidoRegistro").val();
   telefono = $$("#telefonoRegistro").val();
-  // fechaNacimiento = $$("#fechaNcimientoRegistro").val();
+  fechaNacimiento = $$("#fechaNacimientoRegistro").val();
   tipoUsuario = $$("#tipoUsuarioRegistro").val();
 
-  datos = {nombre: nombre, apellido: apellido, telefono: telefono, rol: tipoUsuario};
+  datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario};
   idUsuario = email;
 
   coleccionUsuarios.doc(idUsuario).set(datos)
@@ -117,9 +144,20 @@ function funcionLogin () {
     .then((userCredential) => {
     // Signed in
     var user = userCredential.user;
-
     console.log("Bienvenid@!!! " + email);
-    // ...
+    coleccionUsuarios.doc(email).get()
+    .then( function(documento) {
+      rol = documento.data().rol;
+      switch (rol) {
+        case "Coordinador": mainView.router.navigate("/coordinador/");
+        break;
+        case "Alumno": mainView.router.navigate("/alumno/");
+        break;
+        case "Entrenador": mainView.router.navigate("/entrenador/");
+        break;
+        default: 
+      }
+    })
   })
   .catch((error) => {
     var errorCode = error.code;
@@ -128,5 +166,124 @@ function funcionLogin () {
     console.error(errorCode);
     console.error(errorMessage);
   });
+  }
+}
+
+function mostrarAlumnos () {
+  var query = coleccionUsuarios.where("rol", "==", "Alumno");
+  query.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+      nombre = doc.data().nombre;
+      apellido = doc.data().apellido;
+      $$("#alumnosCoordinador").append("<p>" + nombre + " " + apellido + "<p>");
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  })
+}
+
+function mostrarEntrenadores () {
+  var query = coleccionUsuarios.where("rol", "==", "Entrenador");
+  query.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+      nombre = doc.data().nombre;
+      apellido = doc.data().apellido;
+      $$("#entrenadoresCoordinador").append("<p>" + nombre + " " + apellido + "<p>");
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  })
+}
+
+function funcionDirigirseAlumno () {
+  mainView.router.navigate("/coordinador/altaAlumno");
+}
+
+function funcionDirigirseEntrenador () {
+  mainView.router.navigate("/coordinador/altaEntrenador");
+
+}
+
+function funcionCrearAlumno () {
+  email = $$("#emailAltaAlumno").val();
+  contrasena = $$("#contrasenaAltaAlumno").val();
+
+  if (email != "" && contrasena != "") {
+    firebase.auth().createUserWithEmailAndPassword(email, contrasena)
+    .then((userCredential) => {
+      // Signed in
+      var user = userCredential.user;
+      nombre = $$("#nombreAltaAlumno").val();
+      apellido = $$("#apellidoAltaAlumno").val();
+      telefono = $$("#telefonoAltaAlumno").val();
+      fechaNacimiento = $$("#fechaNacimientoAltaAlumno").val();
+      tipoUsuario = "Alumno";
+
+      datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario};
+      idUsuario = email;
+
+      coleccionUsuarios.doc(idUsuario).set(datos)
+      .then(function (documento) {
+        alert("Alta de alumno exitosa");
+        mainView.router.navigate("/coordinador/");
+      })
+      .catch( function (error) {
+        console.log("Error " + error);
+      })
+    })
+    .catch((error) => {
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      console.error(errorCode);
+      console.error(errorMessage);
+      if (errorCode == "auth/email-already-in-use") {
+        console.error("El email ya se encuentra registrado");
+        }
+        // ..
+    });
+  }
+}
+
+function funcionCrearEntrenador () {
+  email = $$("#emailAltaEntrenador").val();
+  contrasena = $$("#contrasenaAltaEntrenador").val();
+
+  if (email != "" && contrasena != "") {
+    firebase.auth().createUserWithEmailAndPassword(email, contrasena)
+    .then((userCredential) => {
+      // Signed in
+      var user = userCredential.user;
+      nombre = $$("#nombreAltaEntrenador").val();
+      apellido = $$("#apellidoAltaEntrenador").val();
+      telefono = $$("#telefonoAltaEntrenador").val();
+      fechaNacimiento = $$("#fechaNacimientoAltaEntrenador").val();
+      tipoUsuario = "Entrenador";
+
+      datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario};
+      idUsuario = email;
+
+      coleccionUsuarios.doc(idUsuario).set(datos)
+      .then(function (documento) {
+        alert("Alta de entrenador exitosa");
+        mainView.router.navigate("/coordinador/");
+      })
+      .catch( function (error) {
+        console.log("Error " + error);
+      })
+    })
+    .catch((error) => {
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      console.error(errorCode);
+      console.error(errorMessage);
+      if (errorCode == "auth/email-already-in-use") {
+        console.error("El email ya se encuentra registrado");
+        }
+        // ..
+    });
   }
 }
