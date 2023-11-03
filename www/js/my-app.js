@@ -5,7 +5,7 @@ var app = new Framework7({
     // App root element
     root: '#app',
     // App Name
-    name: 'My App',
+    name: 'Lambda Manager',
     // App id
     id: 'com.myapp.test',
     // Enable swipe panel
@@ -31,6 +31,7 @@ var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
 var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario;
 var coleccionUsuarios = db.collection("Usuarios");
+var coleccionClases = db.collection("clases");
 
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
@@ -110,7 +111,6 @@ function funcionRegistro () {
       if (errorCode == "auth/email-already-in-use") {
         console.error("El email ya se encuentra registrado");
         }
-        // ..
     });
   }
 }
@@ -132,7 +132,7 @@ function funcionFinRegistro () {
   })
   .catch( function (error) {
     console.log("Error " + error);
-  })
+  });
 }
 
 function funcionLogin () {
@@ -158,45 +158,119 @@ function funcionLogin () {
         default: 
       }
     })
-  })
-  .catch((error) => {
-    var errorCode = error.code;
-    var errorMessage = error.message;
+    })
+    .catch((error) => {
+      var errorCode = error.code;
+      var errorMessage = error.message;
 
-    console.error(errorCode);
-    console.error(errorMessage);
-  });
+      console.error(errorCode);
+      console.error(errorMessage);
+    });
   }
 }
 
 function mostrarAlumnos () {
   var query = coleccionUsuarios.where("rol", "==", "Alumno");
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Nombre</th>
+                  <th class="label-cell">Apellido</th>
+                  <th class="label-cell">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
   query.get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
       apellido = doc.data().apellido;
-      $$("#alumnosCoordinador").append("<p>" + nombre + " " + apellido + "<p>");
-    })
+      cuerpo += `<tr>
+      <td class="label-cell">${nombre}</td>
+      <td class="label-cell">${apellido}</td>
+      <td class="label-cell"><button onclick="editarAlumno('${doc.id}')" class="button button-raised button-fill">E</button>
+      <button onclick="borrarAlumno('${doc.id}')" class="button button-raised button-fill">B</button></td>
+      </tr>`
+    });
+    $$("#alumnosCoordinador").html(inicio + cuerpo + fin);
   })
   .catch(function(error) {
     console.log("Error: " , error);
+  });
+}
+
+function borrarAlumno(id) {
+  app.dialog.confirm("¿Desea borrar el alumno?", function () {
+    confirmarBorrarAlumno(id);
+  });
+}
+
+function confirmarBorrarAlumno (id) {
+  coleccionUsuarios.doc(id).delete()
+  .then(function() {
+    mostrarAlumnos();
   })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
 }
 
 function mostrarEntrenadores () {
   var query = coleccionUsuarios.where("rol", "==", "Entrenador");
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Nombre</th>
+                  <th class="label-cell">Apellido</th>
+                  <th class="label-cell">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
   query.get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
       apellido = doc.data().apellido;
-      $$("#entrenadoresCoordinador").append("<p>" + nombre + " " + apellido + "<p>");
-    })
+      cuerpo += `<tr>
+      <td class="label-cell">${nombre}</td>
+      <td class="label-cell">${apellido}</td>
+      <td class="label-cell"><button onclick="editarEntrenador('${doc.id}')" class="button button-raised button-fill">E</button>
+      <button onclick="borrarEntrenador('${doc.id}')" class="button button-raised button-fill">B</button></td>
+      </tr>`
+    });
+    $$("#entrenadoresCoordinador").html(inicio + cuerpo + fin);
   })
   .catch(function(error) {
     console.log("Error: " , error);
+  });
+}
+
+function borrarEntrenador(id) {
+  app.dialog.confirm("¿Desea borrar el entrenador?", function () {
+    confirmarBorrarEntrenador(id);
+  });
+}
+
+function confirmarBorrarEntrenador (id) {
+  coleccionUsuarios.doc(id).delete()
+  .then(function() {
+    mostrarEntrenadores();
   })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
 }
 
 function funcionDirigirseAlumno () {
@@ -205,7 +279,6 @@ function funcionDirigirseAlumno () {
 
 function funcionDirigirseEntrenador () {
   mainView.router.navigate("/coordinador/altaEntrenador");
-
 }
 
 function funcionCrearAlumno () {
@@ -233,7 +306,7 @@ function funcionCrearAlumno () {
       })
       .catch( function (error) {
         console.log("Error " + error);
-      })
+      });
     })
     .catch((error) => {
       var errorCode = error.code;
@@ -242,8 +315,7 @@ function funcionCrearAlumno () {
       console.error(errorMessage);
       if (errorCode == "auth/email-already-in-use") {
         console.error("El email ya se encuentra registrado");
-        }
-        // ..
+      }
     });
   }
 }
@@ -282,8 +354,7 @@ function funcionCrearEntrenador () {
       console.error(errorMessage);
       if (errorCode == "auth/email-already-in-use") {
         console.error("El email ya se encuentra registrado");
-        }
-        // ..
+      }
     });
   }
 }
