@@ -21,9 +21,12 @@ var app = new Framework7({
       {path: '/coordinador/', url: 'coordinador.html'},
       {path: '/alumno/', url: 'alumno.html'},
       {path: '/entrenador/', url: 'entrenador.html'},
-      {path: '/coordinador/altaAlumno', url: 'altaAlumno.html'},
-      {path: '/coordinador/altaEntrenador', url: 'altaEntrenador.html'},
-      {path: '/coordinador/altaClase', url: 'altaClase.html'},
+      {path: '/coordinador/altaAlumno/', url: 'altaAlumno.html'},
+      {path: '/coordinador/altaEntrenador/', url: 'altaEntrenador.html'},
+      {path: '/coordinador/altaClase/', url: 'altaClase.html'},
+      {path: '/coordinador/editarAlumno/', url: 'editarAlumno.html'},
+      {path: '/coordinador/editarEntrenador/', url: 'editarEntrenador.html'},
+      {path: '/coordinador/editarClase/', url: 'editarClase.html'}
     ]
     // ... other parameters
   });
@@ -63,13 +66,13 @@ $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
   mostrarEntrenadores();
   mostrarClases();
   $$("#btnAltaAlumno").on("click", function() {
-    mainView.router.navigate("/coordinador/altaAlumno")
+    mainView.router.navigate("/coordinador/altaAlumno/")
   });
   $$("#btnAltaEntrenador").on("click", function() {
-    mainView.router.navigate("/coordinador/altaEntrenador")
+    mainView.router.navigate("/coordinador/altaEntrenador/")
   });
   $$("#btnAltaClase").on("click", function() {
-    mainView.router.navigate("/coordinador/altaClase")
+    mainView.router.navigate("/coordinador/altaClase/")
   });
 })
 
@@ -83,6 +86,18 @@ $$(document).on('page:init', '.page[data-name="altaEntrenador"]', function (e) {
 
 $$(document).on('page:init', '.page[data-name="altaClase"]', function (e) {
   $$("#btnFinalizarAltaClase").on("click", funcionCrearClase);
+})
+
+$$(document).on('page:init', '.page[data-name="editarAlumno"]', function (e) {
+  $$("#btnFinalizarEditarAlumno").on("click", funcionFinEditarAlumno);
+})
+
+$$(document).on('page:init', '.page[data-name="editarEntrenador"]', function (e) {
+  $$("#btnFinalizarEditarEntrenador").on("click", funcionFinEditarEntrenador);
+})
+
+$$(document).on('page:init', '.page[data-name="editarClase"]', function (e) {
+  $$("#btnFinalizarEditarClase").on("click", funcionFinEditarClase);
 })
 
 $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
@@ -191,20 +206,52 @@ function mostrarAlumnos () {
           </div>`;
   query.get()
   .then(function(querySnapshot) {
-    querySnapshot.forEach(function(doc) {
-      nombre = doc.data().nombre;
-      apellido = doc.data().apellido;
+    querySnapshot.forEach(function(documento) {
+      nombre = documento.data().nombre;
+      apellido = documento.data().apellido;
       cuerpo += `<tr>
       <td class="label-cell">${nombre}</td>
       <td class="label-cell">${apellido}</td>
-      <td class="label-cell"><button onclick="editarAlumno('${doc.id}')" class="button button-raised button-fill">E</button>
-      <button onclick="borrarAlumno('${doc.id}')" class="button button-raised button-fill">B</button></td>
+      <td class="label-cell"><button onclick="editarAlumno('${documento.id}')" class="button button-raised button-fill"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarAlumno('${documento.id}')" class="button button-raised button-fill"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#alumnosCoordinador").html(inicio + cuerpo + fin);
   })
   .catch(function(error) {
     console.log("Error: " , error);
+  });
+}
+
+function editarAlumno (id) {
+  mainView.router.navigate("/coordinador/editarAlumno/");
+  coleccionUsuarios.doc(id).get()
+  .then(function(alumno) {
+    $$("#emailEditarAlumno").val(id);
+    $$("#nombreEditarAlumno").val(alumno.data().nombre);
+    $$("#apellidoEditarAlumno").val(alumno.data().apellido);
+    $$("#telefonoEditarAlumno").val(alumno.data().telefono);
+    $$("#fechaNacimientoEditarAlumno").val(alumno.data().nacimiento);
+  })
+  .catch(function(error) {
+    console.log("Error ", error);
+  });
+}
+
+function funcionFinEditarAlumno () {
+  email = $$("#emailEditarAlumno").val();
+  nombre = $$("#nombreEditarAlumno").val();
+  apellido = $$("#apellidoEditarAlumno").val();
+  telefono = $$("#telefonoEditarAlumno").val();
+  fechaNacimiento = $$("#fechaNacimientoEditarAlumno").val();
+
+  coleccionUsuarios.doc(email).update({nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento})
+  .then(function (documento) {
+    app.dialog.alert("Usuario editado");
+    mainView.router.navigate("/coordinador/");
+  })
+  .catch( function (error) {
+    console.log("Error " + error);
   });
 }
 
@@ -250,14 +297,46 @@ function mostrarEntrenadores () {
       cuerpo += `<tr>
       <td class="label-cell">${nombre}</td>
       <td class="label-cell">${apellido}</td>
-      <td class="label-cell"><button onclick="editarEntrenador('${doc.id}')" class="button button-raised button-fill">E</button>
-      <button onclick="borrarEntrenador('${doc.id}')" class="button button-raised button-fill">B</button></td>
+      <td class="label-cell"><button onclick="editarEntrenador('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarEntrenador('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#entrenadoresCoordinador").html(inicio + cuerpo + fin);
   })
   .catch(function(error) {
     console.log("Error: " , error);
+  });
+}
+
+function editarEntrenador (id) {
+  mainView.router.navigate("/coordinador/editarEntrenador/");
+  coleccionUsuarios.doc(id).get()
+  .then(function(entrenador) {
+    $$("#emailEditarEntrenador").val(id);
+    $$("#nombreEditarEntrenador").val(entrenador.data().nombre);
+    $$("#apellidoEditarEntrenador").val(entrenador.data().apellido);
+    $$("#telefonoEditarEntrenador").val(entrenador.data().telefono);
+    $$("#fechaNacimientoEditarEntrenador").val(entrenador.data().nacimiento);
+  })
+  .catch(function(error) {
+    console.log("Error ", error);
+  });
+}
+
+function funcionFinEditarEntrenador () {
+  email = $$("#emailEditarEntrenador").val();
+  nombre = $$("#nombreEditarEntrenador").val();
+  apellido = $$("#apellidoEditarEntrenador").val();
+  telefono = $$("#telefonoEditarEntrenador").val();
+  fechaNacimiento = $$("#fechaNacimientoEditarEntrenador").val();
+
+  coleccionUsuarios.doc(email).update({nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento})
+  .then(function (documento) {
+    app.dialog.alert("Usuario editado");
+    mainView.router.navigate("/coordinador/");
+  })
+  .catch( function (error) {
+    console.log("Error " + error);
   });
 }
 
@@ -302,14 +381,58 @@ function mostrarClases () {
       cuerpo += `<tr>
       <td class="label-cell">${codigo}</td>
       <td class="label-cell">${nombre}</td>
-      <td class="label-cell"><button onclick="editarClase('${doc.id}')" class="button button-raised button-fill">E</button>
-      <button onclick="borrarClase('${doc.id}')" class="button button-raised button-fill">B</button></td>
+      <td class="label-cell"><button onclick="editarClase('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarClase('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#clasesCoordinador").html(inicio + cuerpo + fin);
   })
   .catch(function(error) {
     console.log("Error: " , error);
+  });
+}
+
+function editarClase (id) {
+  mainView.router.navigate("/coordinador/editarClase/");
+  coleccionClases.doc(id).get()
+  .then(function(clase) {
+    $$("#codigoEditarClase").val(id);
+    $$("#nombreEditarClase").val(clase.data().nombre);
+
+    var diasSeleccionados = clase.data().dias;
+
+    $$("input[type='checkbox']").each(function () {
+      var checkbox = $$(this);
+      var dia = checkbox.val();
+      if (diasSeleccionados.includes(dia)) {
+        checkbox.prop("checked", true);
+      } else {
+        checkbox.prop("checked", false);
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error ", error);
+  });
+}
+
+function funcionFinEditarClase () {
+  var diasSeleccionados = [];
+  codigo = $$("#codigoEditarClase").val();
+  nombre = $$("#nombreEditarClase").val();
+
+  $$("input[type='checkbox']:checked").each(function() {
+    var dia = $$(this).val();
+    diasSeleccionados.push(dia);
+  });
+
+  coleccionClases.doc(codigo).update({nombre: nombre, dias: diasSeleccionados})
+  .then(function (documento) {
+    app.dialog.alert("Clase editada");
+    mainView.router.navigate("/coordinador/");
+  })
+  .catch( function (error) {
+    console.log("Error " + error);
   });
 }
 
