@@ -104,11 +104,13 @@ $$(document).on('page:init', '.page[data-name="editarClase"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
-  
+  mostrarEntrenadoresAlumno();
+  mostrarClasesAlumno();
 })
 
 $$(document).on('page:init', '.page[data-name="entrenador"]', function (e) {
-
+  mostrarAlumnosEntrenador();
+  mostrarClasesEntrenador();
 })
 
 $$(document).on('page:init', '.page[data-name="about"]', function (e) {
@@ -170,11 +172,11 @@ function funcionLogin () {
     .then( function(documento) {
       rol = documento.data().rol;
       switch (rol) {
-        case "Coordinador": mainView.router.navigate("/coordinador/");
+        case "Coordinador": funcionSaludoCoordinador();
         break;
-        case "Alumno": mainView.router.navigate("/alumno/");
+        case "Alumno": funcionSaludoAlumno();
         break;
-        case "Entrenador": mainView.router.navigate("/entrenador/");
+        case "Entrenador": funcionSaludoEntrenador();
         break;
         default: 
       }
@@ -187,6 +189,23 @@ function funcionLogin () {
       console.error(errorMessage);
     });
   }
+}
+
+function funcionSaludoCoordinador () {
+  mainView.router.navigate("/coordinador/");
+  var query = coleccionUsuarios.where("rol", "==", "Coordinador");
+  query.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        nombre = documento.data().nombre;
+      }
+    });
+    $$("#saludoCoordinador").html("Hola " + nombre + "!");
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
 }
 
 function mostrarAlumnos () {
@@ -607,4 +626,246 @@ function funcionCrearClase () {
       console.log("Error " + error);
     })
   }
+}
+
+function funcionSaludoAlumno () {
+  mainView.router.navigate("/alumno/");
+  var query = coleccionUsuarios.where("rol", "==", "Alumno");
+  query.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        nombre = documento.data().nombre;
+      }
+    });
+    $$("#saludoAlumno").html("Hola " + nombre + "!");
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function funcionSaludoEntrenador () {
+  mainView.router.navigate("/entrenador/");
+  var query = coleccionUsuarios.where("rol", "==", "Entrenador");
+  query.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        nombre = documento.data().nombre;
+      }
+    });
+    $$("#saludoEntrenador").html("Hola " + nombre + "!");
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function mostrarAlumnosEntrenador () {
+  coleccionEntrenadores.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        clase = documento.data().clase;
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Nombre</th>
+                  <th class="label-cell">Apellido</th>
+                  <th class="label-cell">Clase</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionAlumnos.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if ((documento.data().clase) == clase) {
+        iD = documento.id;
+        query = coleccionUsuarios.where("rol", "==", "Alumno");
+        query.get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(documento) {
+            if (documento.id == iD) {
+              nombre = documento.data().nombre;
+              apellido = documento.data().apellido;
+              cuerpo += `<tr>
+              <td class="label-cell">${nombre}</td>
+              <td class="label-cell">${apellido}</td>
+              <td class="label-cell">${clase}</td>
+              </tr>`
+            }
+          })
+          $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
+        })
+        .catch(function(error) {
+          console.log("Error: " , error);
+        });
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function mostrarClasesEntrenador () {
+  coleccionEntrenadores.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        clase = documento.data().clase;
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Código</th>
+                  <th class="label-cell">Nombre</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionClases.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.data().nombre == clase) {
+        nombre = documento.data().nombre;
+        codigo = documento.id;
+        cuerpo += `<tr>
+        <td class="label-cell">${codigo}</td>
+        <td class="label-cell">${nombre}</td>
+        </tr>`
+      }
+    })
+    $$("#clasesEntrenador").html(inicio + cuerpo + fin);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function mostrarClasesAlumno () {
+  coleccionAlumnos.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        clase = documento.data().clase;
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Código</th>
+                  <th class="label-cell">Nombre</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionClases.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.data().nombre == clase) {
+        nombre = documento.data().nombre;
+        codigo = documento.id;
+        cuerpo += `<tr>
+        <td class="label-cell">${codigo}</td>
+        <td class="label-cell">${nombre}</td>
+        </tr>`
+      }
+    })
+    $$("#clasesAlumno").html(inicio + cuerpo + fin);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function mostrarEntrenadoresAlumno () {
+  coleccionAlumnos.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        clase = documento.data().clase;
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Nombre</th>
+                  <th class="label-cell">Apellido</th>
+                  <th class="label-cell">Clase</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionEntrenadores.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if ((documento.data().clase) == clase) {
+        iD = documento.id;
+        query = coleccionUsuarios.where("rol", "==", "Entrenador");
+        query.get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(documento) {
+            if (documento.id == iD) {
+              nombre = documento.data().nombre;
+              apellido = documento.data().apellido;
+              cuerpo += `<tr>
+              <td class="label-cell">${nombre}</td>
+              <td class="label-cell">${apellido}</td>
+              <td class="label-cell">${clase}</td>
+              </tr>`
+            }
+          })
+          $$("#entrenadoresAlumno").html(inicio + cuerpo + fin);
+        })
+        .catch(function(error) {
+          console.log("Error: " , error);
+        });
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
 }
