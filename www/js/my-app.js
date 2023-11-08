@@ -33,9 +33,11 @@ var app = new Framework7({
 
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
-var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias;
+var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD;
 var coleccionUsuarios = db.collection("Usuarios");
-var coleccionClases = db.collection("clases");
+var coleccionClases = db.collection("Clases");
+var coleccionAlumnos = db.collection("Alumnos");
+var coleccionEntrenadores = db.collection("Entrenadores");
 
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
@@ -67,6 +69,7 @@ $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
   mostrarClases();
   $$("#btnAltaAlumno").on("click", function() {
     mainView.router.navigate("/coordinador/altaAlumno/")
+    cargarClases();
   });
   $$("#btnAltaEntrenador").on("click", function() {
     mainView.router.navigate("/coordinador/altaEntrenador/")
@@ -105,7 +108,7 @@ $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="entrenador"]', function (e) {
-  
+
 })
 
 $$(document).on('page:init', '.page[data-name="about"]', function (e) {
@@ -180,7 +183,6 @@ function funcionLogin () {
     .catch((error) => {
       var errorCode = error.code;
       var errorMessage = error.message;
-
       console.error(errorCode);
       console.error(errorMessage);
     });
@@ -225,9 +227,10 @@ function mostrarAlumnos () {
 
 function editarAlumno (id) {
   mainView.router.navigate("/coordinador/editarAlumno/");
+  var lista = "";
+  email = id;
   coleccionUsuarios.doc(id).get()
   .then(function(alumno) {
-    $$("#emailEditarAlumno").val(id);
     $$("#nombreEditarAlumno").val(alumno.data().nombre);
     $$("#apellidoEditarAlumno").val(alumno.data().apellido);
     $$("#telefonoEditarAlumno").val(alumno.data().telefono);
@@ -236,14 +239,33 @@ function editarAlumno (id) {
   .catch(function(error) {
     console.log("Error ", error);
   });
+  coleccionClases.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      var nombreClase = documento.data().nombre;
+      lista += `<option value='${nombreClase}'>${nombreClase}</option>`;
+    })
+    $$("#agregarClaseAlumno").append(lista);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
 }
 
 function funcionFinEditarAlumno () {
-  email = $$("#emailEditarAlumno").val();
   nombre = $$("#nombreEditarAlumno").val();
   apellido = $$("#apellidoEditarAlumno").val();
   telefono = $$("#telefonoEditarAlumno").val();
   fechaNacimiento = $$("#fechaNacimientoEditarAlumno").val();
+  clase = $$("#agregarClaseAlumno").val();
+
+  coleccionAlumnos.doc(email).set({clase: clase})
+  .then(function() {
+    console.log("Documento creado");
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
 
   coleccionUsuarios.doc(email).update({nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento})
   .then(function (documento) {
@@ -310,9 +332,10 @@ function mostrarEntrenadores () {
 
 function editarEntrenador (id) {
   mainView.router.navigate("/coordinador/editarEntrenador/");
+  var lista = "";
+  email = id;
   coleccionUsuarios.doc(id).get()
   .then(function(entrenador) {
-    $$("#emailEditarEntrenador").val(id);
     $$("#nombreEditarEntrenador").val(entrenador.data().nombre);
     $$("#apellidoEditarEntrenador").val(entrenador.data().apellido);
     $$("#telefonoEditarEntrenador").val(entrenador.data().telefono);
@@ -321,15 +344,33 @@ function editarEntrenador (id) {
   .catch(function(error) {
     console.log("Error ", error);
   });
+  coleccionClases.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      var nombreClase = documento.data().nombre;
+      lista += `<option value='${nombreClase}'>${nombreClase}</option>`;
+    })
+    $$("#agregarClaseEntrenador").append(lista);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
 }
 
 function funcionFinEditarEntrenador () {
-  email = $$("#emailEditarEntrenador").val();
   nombre = $$("#nombreEditarEntrenador").val();
   apellido = $$("#apellidoEditarEntrenador").val();
   telefono = $$("#telefonoEditarEntrenador").val();
   fechaNacimiento = $$("#fechaNacimientoEditarEntrenador").val();
+  clase = $$("#agregarClaseEntrenador").val();
 
+  coleccionEntrenadores.doc(email).set({clase: clase})
+  .then(function() {
+    console.log("Documento creado");
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
   coleccionUsuarios.doc(email).update({nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento})
   .then(function (documento) {
     app.dialog.alert("Usuario editado");
@@ -450,6 +491,21 @@ function confirmarBorrarClase (id) {
   })
   .catch(function(error) {
     console.log("Error: ", error);
+  });
+}
+
+function cargarClases () {
+  var opcion;
+  coleccionClases.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+      nombre = doc.data().nombre;
+      opcion += `<option value="${nombre}">${nombre}</option>`;
+    });
+    $$("#clasesAltaAlumno").html(opcion);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
   });
 }
 
