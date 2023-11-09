@@ -20,7 +20,9 @@ var app = new Framework7({
       {path: '/registro/', url: 'registro.html'},
       {path: '/coordinador/', url: 'coordinador.html'},
       {path: '/alumno/', url: 'alumno.html'},
+      {path: '/alumno/altaObjetivo/', url: 'altaObjetivo.html'},
       {path: '/entrenador/', url: 'entrenador.html'},
+      {path: '/entrenador/altaInforme/', url: 'altaInforme.html'},
       {path: '/coordinador/altaAlumno/', url: 'altaAlumno.html'},
       {path: '/coordinador/altaEntrenador/', url: 'altaEntrenador.html'},
       {path: '/coordinador/altaClase/', url: 'altaClase.html'},
@@ -33,11 +35,13 @@ var app = new Framework7({
 
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
-var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD;
+var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD, autor;
 var coleccionUsuarios = db.collection("Usuarios");
 var coleccionClases = db.collection("Clases");
 var coleccionAlumnos = db.collection("Alumnos");
 var coleccionEntrenadores = db.collection("Entrenadores");
+var coleccionInformes = db.collection("Informes");
+var coleccionObjetivos = db.collection("Objetivos");
 
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
@@ -67,15 +71,16 @@ $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
   mostrarAlumnos();
   mostrarEntrenadores();
   mostrarClases();
+  mostrarInformes();
   $$("#btnAltaAlumno").on("click", function() {
-    mainView.router.navigate("/coordinador/altaAlumno/")
+    mainView.router.navigate("/coordinador/altaAlumno/");
     cargarClases();
   });
   $$("#btnAltaEntrenador").on("click", function() {
-    mainView.router.navigate("/coordinador/altaEntrenador/")
+    mainView.router.navigate("/coordinador/altaEntrenador/");
   });
   $$("#btnAltaClase").on("click", function() {
-    mainView.router.navigate("/coordinador/altaClase/")
+    mainView.router.navigate("/coordinador/altaClase/");
   });
 })
 
@@ -106,15 +111,34 @@ $$(document).on('page:init', '.page[data-name="editarClase"]', function (e) {
 $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
   mostrarEntrenadoresAlumno();
   mostrarClasesAlumno();
+  mostrarObjetivosAlumno();
+  $$("#btnAltaObjetivo").on("click", function() {
+    mainView.router.navigate("/alumno/altaObjetivo/");
+  });
+})
+
+$$(document).on('page:init', '.page[data-name="altaObjetivo"]', function (e) {
+  funcionAutorObjetivo();
+  $$("#btnFinalizarAltaObjetivo").on("click", funcionCrearObjetivo);
 })
 
 $$(document).on('page:init', '.page[data-name="entrenador"]', function (e) {
   mostrarAlumnosEntrenador();
   mostrarClasesEntrenador();
+  mostrarInformesEntrenador();
+  mostrarObjetivosEntrenador();
+  $$("#btnAltaInforme").on("click", function() {
+    mainView.router.navigate("/entrenador/altaInforme/");
+  });
+})
+
+$$(document).on('page:init', '.page[data-name="altaInforme"]', function (e) {
+  funcionAutorInforme();
+  $$("#btnFinalizarAltaInforme").on("click", funcionCrearInforme);
 })
 
 $$(document).on('page:init', '.page[data-name="about"]', function (e) {
-
+  
 })
 
 // FUNCIONES
@@ -513,6 +537,41 @@ function confirmarBorrarClase (id) {
   });
 }
 
+function mostrarInformes () {
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Autor</th>
+                  <th class="label-cell">Detalle</th>
+                  <th class="label-cell">Prioridad</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionInformes.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      autor = documento.data().autor;
+      detalle = documento.data().detalle;
+      prioridad = documento.data().prioridad;
+      cuerpo += `<tr>
+      <td class="label-cell">${autor}</td>
+      <td class="label-cell">${detalle}</td>
+      <td class="label-cell">${prioridad}</td>
+      </tr>`;
+    })
+    $$("#informesCoordinador").html(inicio + cuerpo + fin);
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
+}
+
 function cargarClases () {
   var opcion;
   coleccionClases.get()
@@ -867,5 +926,211 @@ function mostrarEntrenadoresAlumno () {
   })
   .catch(function(error) {
     console.log("Error: " , error);
+  });
+}
+
+function mostrarObjetivosAlumno () {
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Detalle</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionUsuarios.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if(documento.id == email) {
+        nombre = documento.data().nombre;
+        apellido = documento.data().apellido;
+      }
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
+  coleccionObjetivos.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.data().autor == (nombre + " " + apellido)) {
+        detalle = documento.data().detalle;
+        cuerpo += `<tr>
+                <td class="label-cell">${detalle}</td>
+                </tr>`;
+      }
+      $$("#objetivosAlumno").html(inicio + cuerpo + fin);
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function funcionAutorObjetivo () {
+  coleccionUsuarios.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        nombre = documento.data().nombre;
+        apellido = documento.data().apellido;
+      }
+    })
+    autor = nombre + " " + apellido;
+    $$("#autorAltaObjetivo").val(autor);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function funcionCrearObjetivo () {
+  var detalle;
+  detalle = $$("#detalleAltaObjetivo").val();
+  datos = {detalle: detalle, autor: autor};
+  coleccionObjetivos.add(datos)
+  .then(function (documento) {
+    app.dialog.alert("Objetivo creado exitosamente");
+    mainView.router.navigate("/alumno/");
+  })
+  .catch( function (error) {
+    console.log("Error " + error);
+  });
+}
+
+function mostrarInformesEntrenador () {
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Detalle</th>
+                  <th class="label-cell">Prioridad</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionUsuarios.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if(documento.id == email) {
+        nombre = documento.data().nombre;
+        apellido = documento.data().apellido;
+      }
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
+  coleccionInformes.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.data().autor == (nombre + " " + apellido)) {
+        detalle = documento.data().detalle;
+        prioridad = documento.data().prioridad;
+        cuerpo += `<tr>
+                <td class="label-cell">${detalle}</td>
+                <td class="label-cell">${prioridad}</td>
+                </tr>`;
+      }
+      $$("#informesEntrenador").html(inicio + cuerpo + fin);
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function mostrarObjetivosEntrenador () {
+  coleccionEntrenadores.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        clase = documento.data().clase;
+      }
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Autor</th>
+                  <th class="label-cell">Detalle</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionAlumnos.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if ((documento.data().clase) == clase) {
+        nombre = documento.data().nombre;
+        apellido = documento.data().apellido;
+        coleccionObjetivos.get()
+        .then(function(querySnapshot) {
+          querySnapshot.forEach(function(documento) {
+            if (documento.data().autor == (nombre + " " + apellido)) {
+              autor = documento.data().autor;
+              detalle = documento.data().detalle;
+              cuerpo += `<tr>
+              <td class="label-cell">${autor}</td>
+              <td class="label-cell">${detalle}</td>
+              </tr>`
+            }
+            $$("#objetivosEntrenador").html(inicio + cuerpo + fin);
+          })
+        })
+      }
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function funcionAutorInforme () {
+  coleccionUsuarios.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      if (documento.id == email) {
+        nombre = documento.data().nombre;
+        apellido = documento.data().apellido;
+      }
+    })
+    autor = nombre + " " + apellido;
+    $$("#autorAltaInforme").val(autor);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function funcionCrearInforme () {
+  var detalle, prioridad;
+  detalle = $$("#detalleAltaInforme").val();
+  prioridad = $$("#prioridadAltaInforme").val(); 
+  datos = {detalle: detalle, prioridad: prioridad, autor: autor};
+  coleccionInformes.add(datos)
+  .then(function (documento) {
+    app.dialog.alert("Informe creado exitosamente");
+    mainView.router.navigate("/entrenador/");
+  })
+  .catch( function (error) {
+    console.log("Error " + error);
   });
 }
