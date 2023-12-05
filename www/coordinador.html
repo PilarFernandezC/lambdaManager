@@ -1,41 +1,41 @@
 <!-- We don't need a full layout in this file because this page will be parsed with Ajax.  -->
 <div class="page" data-name="coordinador">
-    <div class="navbar">
-        <div class="navbar-inner sliding">
-        <div class="left">
-            <a href="#" class="link back">
-            <i class="icon icon-back"></i>
-            <span class="ios-only">Back</span>
-            </a>
-        </div>
-        <div class="title">About Framework7</div>
-        </div>
-    </div>
     <div class="page-content">
-        <div class="block-title">Welcome to Framework7</div>
-        <div class="block block-strong">
-            <div class="grid grid-cols-1 grid-gap">
+        <div class="block">
+            <div class="centrar">
+                <img src="img/logolambda.png" class="logoChico">
+            </div>
+            <div>
                 <h2 id="saludoCoordinador"></h2>
             </div>
             <div class="grid grid-cols-1 grid-gap">
                 <h4>Alumnos</h4>
                 <div id="alumnosCoordinador" class="grid grid-cols-1 grid-gap"></div>
-                <button id="btnAltaAlumno" class="button button-raised button-fill">Crear alumno</button>
+                <div class="centrar">
+                    <button id="btnAltaAlumno" class="button button-raised button-fill color-teal">Crear alumno</button>
+                </div>
             </div>
             <div class="grid grid-cols-1 grid-gap">
                 <h4>Entrenadores</h4>
                 <div id="entrenadoresCoordinador" class="grid grid-cols-1 grid-gap"></div>
-                <button id="btnAltaEntrenador" class="button button-raised button-fill">Crear entrenador</button>
+                <div class="centrar">
+                    <button id="btnAltaEntrenador" class="button button-raised button-fill color-teal">Crear entrenador</button>
+                </div>
             </div>
             <div class="grid grid-cols-1 grid-gap">
                 <h4>Clases</h4>
                 <div id="clasesCoordinador" class="grid grid-cols-1 grid-gap"></div>
-                <button id="btnAltaClase" class="button button-raised button-fill">Crear clase</button>
+                <div class="centrar">
+                    <button id="btnAltaClase" class="button button-raised button-fill color-teal">Crear clase</button>
+                </div>
             </div>
             <div class="grid grid-cols-1 grid-gap">
                 <h4>Informes</h4>
                 <div id="informesCoordinador" class="grid grid-cols-1 grid-gap"></div>
             </div>
+        </div>
+        <div class="grid grid-cols-1 grid-gap cerrarSesion">
+            <a href="/login/" class="button button-raised button-fill color-teal">Cerrar sesión</a>
         </div>
     </div>
 </div>

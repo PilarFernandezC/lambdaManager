@@ -1,77 +1,53 @@
 <!-- We don't need a full layout in this file because this page will be parsed with Ajax.  -->
 <div class="page" data-name="registro">
-    <div class="navbar">
-        <div class="navbar-inner sliding">
-        <div class="left">
-            <a href="#" class="link back">
-            <i class="icon icon-back"></i>
-            <span class="ios-only">Back</span>
-            </a>
-        </div>
-        <div class="title">About Framework7</div>
-        </div>
-    </div>
     <div class="page-content">
-        <div class="block-title">Registro</div>
-        <div class="block block-strong">
+        <div class="block">
             <div class="grid grid-cols-1 grid-gap">
+              <img src="img/logolambda.png">
+              <h2>Registro</h2>
+              <h4>Paso 2 de 2</h4>
                 <div class="list list-strong-ios list-dividers-ios inset-ios">
                     <ul>
                         <li class="item-content item-input item-input-with-info">
-                            <div class="item-media">
-                            <i class="icon demo-list-icon"></i>
-                            </div>
                             <div class="item-inner">
                             <div class="item-title item-label">Nombre</div>
                             <div class="item-input-wrap">
                                 <input type="text" id="nombreRegistro" placeholder="Nombre" required validate>
                                 <span class="input-clear-button"></span>
-                                <div class="item-input-info">Default "required" validation</div>
+                                <div class="item-input-info"></div>
                             </div>
                             </div>
                         </li>
                         <li class="item-content item-input item-input-with-info">
-                            <div class="item-media">
-                            <i class="icon demo-list-icon"></i>
-                            </div>
                             <div class="item-inner">
                             <div class="item-title item-label">Apellido</div>
                             <div class="item-input-wrap">
                                 <input type="text" id="apellidoRegistro" placeholder="Apellido" required validate>
                                 <span class="input-clear-button"></span>
-                                <div class="item-input-info">Default "required" validation</div>
+                                <div class="item-input-info"></div>
                             </div>
                             </div>
                         </li>
                         <li class="item-content item-input item-input-with-info">
-                            <div class="item-media">
-                              <i class="icon demo-list-icon"></i>
-                            </div>
                             <div class="item-inner">
                               <div class="item-title item-label">Teléfono de contacto</div>
                               <div class="item-input-wrap">
                                 <input type="text" id="telefonoRegistro" placeholder="Teléfono" required validate pattern="[0-9]*"
                                   data-error-message="Solo números">
                                 <span class="input-clear-button"></span>
-                                <div class="item-input-info">With custom error message</div>
+                                <div class="item-input-info"></div>
                               </div>
                             </div>
                         </li>
                         <li class="item-content item-input">
-                            <div class="item-media">
-                              <i class="icon demo-list-icon"></i>
-                            </div>
                             <div class="item-inner">
                               <div class="item-title item-label">Fecha de nacimiento</div>
                               <div class="item-input-wrap">
-                                <input type="date" id="fechaNacimientoRegistro" value="2023-10-30" placeholder="Seleccionar">
+                                <input type="date" id="fechaNacimientoRegistro" value="2023-11-13" placeholder="Seleccionar">
                               </div>
                             </div>
                         </li>
                         <li class="item-content item-input">
-                            <div class="item-media">
-                              <i class="icon demo-list-icon"></i>
-                            </div>
                             <div class="item-inner">
                               <div class="item-title item-label">Tipo de usuario</div>
                               <div class="item-input-wrap input-dropdown-wrap">
@@ -85,9 +61,9 @@
                     </ul>
                 </div>
             </div>
-            <div class="grid grid-cols-1 grid-gap">
+            <div class="grid grid-cols-1 grid-gap centrar">
                 <div>
-                    <button id="btnFinalizarRegistro" class="button button-raised button-fill">Finalizar Registro</button>
+                    <button id="btnFinalizarRegistro" class="button button-raised button-fill color-teal">Finalizar Registro</button>
                 </div>
             </div>
         </div>

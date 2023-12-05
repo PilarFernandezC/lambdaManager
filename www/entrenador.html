@@ -1,20 +1,11 @@
 <!-- We don't need a full layout in this file because this page will be parsed with Ajax.  -->
 <div class="page" data-name="entrenador">
-    <div class="navbar">
-        <div class="navbar-inner sliding">
-        <div class="left">
-            <a href="#" class="link back">
-            <i class="icon icon-back"></i>
-            <span class="ios-only">Back</span>
-            </a>
-        </div>
-        <div class="title">About Framework7</div>
-        </div>
-    </div>
     <div class="page-content">
-        <div class="block-title">Welcome to Framework7</div>
-        <div class="block block-strong">
-            <div class="grid grid-cols-1 grid-gap">
+        <div class="block">
+            <div class="centrar">
+                <img src="img/logolambda.png" class="logoChico">
+            </div>
+            <div>
                 <h2 id="saludoEntrenador"></h2>
             </div>
             <div class="grid grid-cols-1 grid-gap">
@@ -28,11 +19,16 @@
             <div class="grid grid-cols-1 grid-gap">
                 <h4>Tus informes</h4>
                 <div id="informesEntrenador" class="grid grid-cols-1 grid-gap"></div>
-                <button id="btnAltaInforme" class="button button-raised button-fill">Crear informe</button>
+                <div class="centrar">
+                    <button id="btnAltaInforme" class="button button-raised button-fill color-teal">Crear informe</button>
+                </div>
             </div>
             <div class="grid grid-cols-1 grid-gap">
                 <h4>Objetivos de tus alumnos</h4>
                 <div id="objetivosEntrenador" class="grid grid-cols-1 grid-gap"></div>
+            </div>
+            <div class="grid grid-cols-1 grid-gap cerrarSesion">
+                <a href="/login/" class="button button-raised button-fill color-teal">Cerrar sesión</a>
             </div>
         </div>
     </div>

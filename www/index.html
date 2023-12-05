@@ -41,23 +41,21 @@
         <div class="view view-main">
        
             <!-- Top Navbar -->
-            <div class="navbar">
+            <!-- <div class="navbar">
                 <div class="navbar-bg"></div>
                 <div class="navbar-inner">
-                    <div class="left"><i class="icon icon-back"></i></div>
-                    <div class="title">Page Title</div>
                     <div class="right"><i class="icon icon-forward"></i></div>
                 </div>
-            </div>
+            </div> -->
     
             <!-- Toolbar -->
-            <div class="toolbar toolbar-bottom">
-                <div class="toolbar-inner">
+            <!-- <div class="toolbar toolbar-bottom">
+                <div class="toolbar-inner"> -->
                 <!-- Toolbar links -->
-                <a href="#" class="link">Link 1</a>
+                <!-- <a href="#" class="link">Link 1</a>
                 <a href="#" class="link">Link 2</a>
                 </div>
-            </div>
+            </div> -->
         
         <!-- Initial Page, "data-name" contains page name -->
             <div data-name="index" class="page">
@@ -66,8 +64,10 @@
                     <div class="block">
                         
                         <!-- CONTENIDO DEMO -->
-                        <h2>Registro</h2>
                         <div class="grid grid-cols-1 grid-gap">
+                            <img src="img/logolambda.png">
+                            <h2>Registro</h2>
+                            <h4>Paso 1 de 2</h4>
                             <div class="list list-strong-ios list-dividers-ios inset-ios">
                                 <ul>
                                   <li class="item-content item-input item-input-with-info">
@@ -76,6 +76,7 @@
                                         <div class="item-input-wrap">
                                           <input type="email" id="emailIndex" placeholder="Email" required validate>
                                           <span class="input-clear-button"></span>
+                                          <div class="item-input-info">Validación de e-mail</div>
                                         </div>
                                     </div>
                                   </li>
@@ -91,21 +92,19 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 grid-gap">
+                        <div class="grid grid-cols-1 grid-gap centrar">
                             <div>
-                                <button id="btnRegistro" class="button button-raised button-fill">Continuar</button>
+                                <button id="btnRegistro" class="button button-raised button-fill color-teal">Continuar</button>
                             </div>
-                        </div>
-                        <div class="grid grid-cols-1 grid-gap">
                             <div>
-                                <a href="/login/" class="button button-raised button-fill">Quiero iniciar sesión</a>
+                                <a href="/login/" class="link">¿Ya tenés una cuenta? Inicia sesión</a>
                             </div>
                         </div>
                         <!-- Link to another page -->
-                        <a href="/about/">About app</a>
+                        <!-- <a href="/about/">About app</a> -->
 
                         <!-- In data-popup attribute we specify CSS selector of popup we need to open -->
-                        <p><a href="#" data-popup=".my-popup" class="popup-open">Open Popup</a></p>
+                        <!-- <p><a href="#" data-popup=".my-popup" class="popup-open">Open Popup</a></p> -->
 
                         <!-- And somewhere in DOM -->
                         <div class="popup my-popup">

@@ -808,3 +808,54 @@ code {
 .pie-chart svg {
   max-width: 320px;
 }
+
+img { 
+  width: 250px;
+  height: 250px;
+  margin: auto;
+  margin-bottom: 40px;
+}
+
+h2 {
+  text-align: center;
+  color: teal;
+  margin: 0px;
+}
+
+h4 {
+  text-align: center;
+  color: teal;
+  margin: 40px 0px 0px 0px;
+}
+
+a {
+  color: teal;
+}
+
+.centrar { 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: auto;
+}
+
+.cerrarSesion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 70px 10px 10px 0px;
+}
+
+.botones {
+  margin: 5px;
+  width: 40px;
+}
+
+.divBotones {
+  display: flex;
+}
+
+.logoChico {
+  width: 80px;
+  height: 80px;
+}
