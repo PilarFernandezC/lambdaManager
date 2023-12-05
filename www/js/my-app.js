@@ -35,7 +35,7 @@ var app = new Framework7({
 
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
-var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD, autor;
+var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD, autor, nombreSaludo;
 var coleccionUsuarios = db.collection("Usuarios");
 var coleccionClases = db.collection("Clases");
 var coleccionAlumnos = db.collection("Alumnos");
@@ -68,6 +68,7 @@ $$(document).on('page:init', '.page[data-name="login"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
+  funcionSaludoCoordinador();
   mostrarAlumnos();
   mostrarEntrenadores();
   mostrarClases();
@@ -109,6 +110,7 @@ $$(document).on('page:init', '.page[data-name="editarClase"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
+  funcionSaludoAlumno();
   mostrarEntrenadoresAlumno();
   mostrarClasesAlumno();
   mostrarObjetivosAlumno();
@@ -123,10 +125,12 @@ $$(document).on('page:init', '.page[data-name="altaObjetivo"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="entrenador"]', function (e) {
+  //cargarClaseEntrenador();
+  funcionSaludoEntrenador();
   mostrarAlumnosEntrenador();
-  mostrarClasesEntrenador();
   mostrarInformesEntrenador();
   mostrarObjetivosEntrenador();
+  mostrarClasesEntrenador();
   $$("#btnAltaInforme").on("click", function() {
     mainView.router.navigate("/entrenador/altaInforme/");
   });
@@ -196,11 +200,11 @@ function funcionLogin () {
     .then( function(documento) {
       rol = documento.data().rol;
       switch (rol) {
-        case "Coordinador": funcionSaludoCoordinador();
+        case "Coordinador": mainView.router.navigate("/coordinador/");
         break;
-        case "Alumno": funcionSaludoAlumno();
+        case "Alumno": mainView.router.navigate("/alumno/");
         break;
-        case "Entrenador": funcionSaludoEntrenador();
+        case "Entrenador": mainView.router.navigate("/entrenador/");
         break;
         default: 
       }
@@ -216,16 +220,15 @@ function funcionLogin () {
 }
 
 function funcionSaludoCoordinador () {
-  mainView.router.navigate("/coordinador/");
   var query = coleccionUsuarios.where("rol", "==", "Coordinador");
   query.get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(documento) {
       if (documento.id == email) {
-        nombre = documento.data().nombre;
+        nombreSaludo = documento.data().nombre;
       }
     });
-    $$("#saludoCoordinador").html("Hola " + nombre + "!");
+    $$("#saludoCoordinador").html("Hola " + nombreSaludo + "!");
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -257,8 +260,8 @@ function mostrarAlumnos () {
       cuerpo += `<tr>
       <td class="label-cell">${nombre}</td>
       <td class="label-cell">${apellido}</td>
-      <td class="label-cell"><button onclick="editarAlumno('${documento.id}')" class="button button-raised button-fill"><i class="icon f7-icons">pencil</i></button>
-      <button onclick="borrarAlumno('${documento.id}')" class="button button-raised button-fill"><i class="icon f7-icons">trash</i></button></td>
+      <td class="label-cell divBotones"><button onclick="editarAlumno('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarAlumno('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#alumnosCoordinador").html(inicio + cuerpo + fin);
@@ -362,8 +365,8 @@ function mostrarEntrenadores () {
       cuerpo += `<tr>
       <td class="label-cell">${nombre}</td>
       <td class="label-cell">${apellido}</td>
-      <td class="label-cell"><button onclick="editarEntrenador('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">pencil</i></button>
-      <button onclick="borrarEntrenador('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">trash</i></button></td>
+      <td class="label-cell divBotones"><button onclick="editarEntrenador('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarEntrenador('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#entrenadoresCoordinador").html(inicio + cuerpo + fin);
@@ -465,8 +468,8 @@ function mostrarClases () {
       cuerpo += `<tr>
       <td class="label-cell">${codigo}</td>
       <td class="label-cell">${nombre}</td>
-      <td class="label-cell"><button onclick="editarClase('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">pencil</i></button>
-      <button onclick="borrarClase('${doc.id}')" class="button button-raised button-fill"><i class="icon f7-icons">trash</i></button></td>
+      <td class="label-cell divBotones"><button onclick="editarClase('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarClase('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#clasesCoordinador").html(inicio + cuerpo + fin);
@@ -688,16 +691,15 @@ function funcionCrearClase () {
 }
 
 function funcionSaludoAlumno () {
-  mainView.router.navigate("/alumno/");
   var query = coleccionUsuarios.where("rol", "==", "Alumno");
   query.get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(documento) {
       if (documento.id == email) {
-        nombre = documento.data().nombre;
+        nombreSaludo = documento.data().nombre;
       }
     });
-    $$("#saludoAlumno").html("Hola " + nombre + "!");
+    $$("#saludoAlumno").html("Hola " + nombreSaludo + "!");
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -705,79 +707,86 @@ function funcionSaludoAlumno () {
 }
 
 function funcionSaludoEntrenador () {
-  mainView.router.navigate("/entrenador/");
   var query = coleccionUsuarios.where("rol", "==", "Entrenador");
   query.get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(documento) {
       if (documento.id == email) {
-        nombre = documento.data().nombre;
+        nombreSaludo = documento.data().nombre;
       }
     });
-    $$("#saludoEntrenador").html("Hola " + nombre + "!");
+    $$("#saludoEntrenador").html("Hola " + nombreSaludo + "!");
   })
   .catch(function(error) {
     console.log("Error: " , error);
   });
 }
 
-function mostrarAlumnosEntrenador () {
+function mostrarAlumnosEntrenador() {
+  app.preloader.show();
   coleccionEntrenadores.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.id == email) {
-        clase = documento.data().clase;
-      }
-    });
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
-  var inicio, cuerpo, fin;
-  inicio = `<div class="data-table">
-            <table>
-              <thead>
-                <tr>
-                  <th class="label-cell">Nombre</th>
-                  <th class="label-cell">Apellido</th>
-                  <th class="label-cell">Clase</th>
-                </tr>
-              </thead>
-              <tbody>`;
-  cuerpo = ``;
-  fin = `</tbody>
-            </table>
-          </div>`;
-  coleccionAlumnos.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if ((documento.data().clase) == clase) {
-        iD = documento.id;
-        query = coleccionUsuarios.where("rol", "==", "Alumno");
-        query.get()
+    .then(function(querySnapshot) {
+      querySnapshot.forEach(function(documento) {
+        if (documento.id === email) {
+          clase = documento.data().clase;
+        }
+      });
+      var inicio = `<div class="data-table">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="label-cell">Nombre</th>
+                              <th class="label-cell">Apellido</th>
+                              <th class="label-cell">Clase</th>
+                            </tr>
+                          </thead>
+                          <tbody>`;
+
+      var cuerpo = ``;
+      var fin = `</tbody>
+                    </table>
+                  </div>`;
+      coleccionAlumnos.where("clase", "==", clase).get()
         .then(function(querySnapshot) {
+          var promesas = [];
           querySnapshot.forEach(function(documento) {
-            if (documento.id == iD) {
-              nombre = documento.data().nombre;
-              apellido = documento.data().apellido;
-              cuerpo += `<tr>
-              <td class="label-cell">${nombre}</td>
-              <td class="label-cell">${apellido}</td>
-              <td class="label-cell">${clase}</td>
-              </tr>`
-            }
-          })
-          $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
+            var iD = documento.id;
+            var query = coleccionUsuarios.where("rol", "==", "Alumno").get();
+            promesas.push(
+              query.then(function(querySnapshot) {
+                querySnapshot.forEach(function(documento) {
+                  if (documento.id === iD) {
+                    nombre = documento.data().nombre;
+                    apellido = documento.data().apellido;
+                    cuerpo += `<tr>
+                                <td class="label-cell">${nombre}</td>
+                                <td class="label-cell">${apellido}</td>
+                                <td class="label-cell">${clase}</td>
+                              </tr>`;
+                  }
+                });
+              })
+            );
+          });
+          Promise.all(promesas)
+            .then(function() {
+              app.preloader.hide();
+              $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
+            })
+            .catch(function(error) {
+              console.log("Error: ", error);
+              app.preloader.hide();
+            });
         })
         .catch(function(error) {
-          console.log("Error: " , error);
+          console.log("Error: ", error);
+          app.preloader.hide();
         });
-      }
+    })
+    .catch(function(error) {
+      console.log("Error: ", error);
+      app.preloader.hide();
     });
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
 }
 
 function mostrarClasesEntrenador () {
@@ -1049,60 +1058,68 @@ function mostrarInformesEntrenador () {
   });
 }
 
-function mostrarObjetivosEntrenador () {
+function mostrarObjetivosEntrenador() {
+  app.preloader.show();
+  var inicio = `<div class="data-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th class="label-cell">Autor</th>
+                          <th class="label-cell">Detalle</th>
+                        </tr>
+                      </thead>
+                      <tbody>`;
+  var cuerpo = ``;
+  var fin = `</tbody>
+                </table>
+              </div>`;
   coleccionEntrenadores.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.id == email) {
-        clase = documento.data().clase;
-      }
-    });
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
-  var inicio, cuerpo, fin;
-  inicio = `<div class="data-table">
-            <table>
-              <thead>
-                <tr>
-                  <th class="label-cell">Autor</th>
-                  <th class="label-cell">Detalle</th>
-                </tr>
-              </thead>
-              <tbody>`;
-  cuerpo = ``;
-  fin = `</tbody>
-            </table>
-          </div>`;
-  coleccionAlumnos.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if ((documento.data().clase) == clase) {
-        nombre = documento.data().nombre;
-        apellido = documento.data().apellido;
-        coleccionObjetivos.get()
-        .then(function(querySnapshot) {
-          querySnapshot.forEach(function(documento) {
-            if (documento.data().autor == (nombre + " " + apellido)) {
-              autor = documento.data().autor;
-              detalle = documento.data().detalle;
-              cuerpo += `<tr>
+    .then(function (querySnapshot) {
+      querySnapshot.forEach(function (documento) {
+        if (documento.id === email) {
+          clase = documento.data().clase;
+        }
+      });
+      return coleccionAlumnos.where("clase", "==", clase).get();
+    })
+    .then(function (querySnapshot) {
+      var promesas = [];
+      querySnapshot.forEach(function(documento) {
+        var idAlumno = documento.id;
+        var alumnoPromesa = coleccionUsuarios.doc(idAlumno).get()
+          .then(function (documento) {
+            if (documento.exists) {
+              nombre = documento.data().nombre;
+              apellido = documento.data().apellido;
+              return coleccionObjetivos.where("autor", "==", nombre + " " + apellido).get();
+            }
+          });
+        promesas.push(alumnoPromesa);
+      });
+      return Promise.all(promesas);
+    })
+    .then(function(querySnapshot) {
+      querySnapshot.forEach(function (querySnapshot) {
+        if (querySnapshot) {
+          querySnapshot.forEach(function (documento) {
+            var autor = documento.data().autor;
+            var detalle = documento.data().detalle;
+            cuerpo += `<tr>
               <td class="label-cell">${autor}</td>
               <td class="label-cell">${detalle}</td>
-              </tr>`
-            }
-            $$("#objetivosEntrenador").html(inicio + cuerpo + fin);
-          })
-        })
-      }
+            </tr>`;
+          });
+        }
+      });
+      app.preloader.hide();
+      $$("#objetivosEntrenador").html(inicio + cuerpo + fin);
     })
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
+    .catch(function (error) {
+      console.log("Error: ", error);
+      app.preloader.hide();
+    });
 }
-
+                
 function funcionAutorInforme () {
   coleccionUsuarios.get()
   .then(function(querySnapshot) {
