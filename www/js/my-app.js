@@ -26,22 +26,25 @@ var app = new Framework7({
       {path: '/coordinador/altaAlumno/', url: 'altaAlumno.html'},
       {path: '/coordinador/altaEntrenador/', url: 'altaEntrenador.html'},
       {path: '/coordinador/altaClase/', url: 'altaClase.html'},
+      {path: '/coordinador/altaCuota/', url: 'altaCuota.html'},
       {path: '/coordinador/editarAlumno/', url: 'editarAlumno.html'},
       {path: '/coordinador/editarEntrenador/', url: 'editarEntrenador.html'},
-      {path: '/coordinador/editarClase/', url: 'editarClase.html'}
+      {path: '/coordinador/editarClase/', url: 'editarClase.html'},
+      {path: '/coordinador/editarCuota/', url: 'editarCuota.html'}
     ]
     // ... other parameters
   });
 
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
-var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD, autor, nombreSaludo;
+var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD, autor, nombreSaludo, detalle, valor, codigo;
 var coleccionUsuarios = db.collection("Usuarios");
 var coleccionClases = db.collection("Clases");
 var coleccionAlumnos = db.collection("Alumnos");
 var coleccionEntrenadores = db.collection("Entrenadores");
 var coleccionInformes = db.collection("Informes");
 var coleccionObjetivos = db.collection("Objetivos");
+var coleccionCuotas = db.collection("Cuotas");
 
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
@@ -73,6 +76,7 @@ $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
   mostrarEntrenadores();
   mostrarClases();
   mostrarInformes();
+  mostrarCuotas();
   $$("#btnAltaAlumno").on("click", function() {
     mainView.router.navigate("/coordinador/altaAlumno/");
     cargarClases();
@@ -82,6 +86,9 @@ $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
   });
   $$("#btnAltaClase").on("click", function() {
     mainView.router.navigate("/coordinador/altaClase/");
+  });
+  $$("#btnAltaCuota").on("click", function() {
+    mainView.router.navigate("/coordinador/altaCuota/");
   });
 })
 
@@ -97,6 +104,10 @@ $$(document).on('page:init', '.page[data-name="altaClase"]', function (e) {
   $$("#btnFinalizarAltaClase").on("click", funcionCrearClase);
 })
 
+$$(document).on('page:init', '.page[data-name="altaCuota"]', function (e) {
+  $$("#btnFinalizarAltaCuota").on("click", funcionCrearCuota);
+})
+
 $$(document).on('page:init', '.page[data-name="editarAlumno"]', function (e) {
   $$("#btnFinalizarEditarAlumno").on("click", funcionFinEditarAlumno);
 })
@@ -107,6 +118,10 @@ $$(document).on('page:init', '.page[data-name="editarEntrenador"]', function (e)
 
 $$(document).on('page:init', '.page[data-name="editarClase"]', function (e) {
   $$("#btnFinalizarEditarClase").on("click", funcionFinEditarClase);
+})
+
+$$(document).on('page:init', '.page[data-name="editarCuota"]', function (e) {
+  $$("#btnFinalizarEditarCuota").on("click", funcionFinEditarCuota);
 })
 
 $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
@@ -125,7 +140,6 @@ $$(document).on('page:init', '.page[data-name="altaObjetivo"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="entrenador"]', function (e) {
-  //cargarClaseEntrenador();
   funcionSaludoEntrenador();
   mostrarAlumnosEntrenador();
   mostrarInformesEntrenador();
@@ -483,7 +497,6 @@ function editarClase (id) {
   mainView.router.navigate("/coordinador/editarClase/");
   coleccionClases.doc(id).get()
   .then(function(clase) {
-    $$("#codigoEditarClase").val(id);
     $$("#nombreEditarClase").val(clase.data().nombre);
 
     var diasSeleccionados = clase.data().dias;
@@ -505,7 +518,6 @@ function editarClase (id) {
 
 function funcionFinEditarClase () {
   var diasSeleccionados = [];
-  codigo = $$("#codigoEditarClase").val();
   nombre = $$("#nombreEditarClase").val();
 
   $$("input[type='checkbox']:checked").each(function() {
@@ -569,6 +581,87 @@ function mostrarInformes () {
       </tr>`;
     })
     $$("#informesCoordinador").html(inicio + cuerpo + fin);
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
+}
+
+function mostrarCuotas () {
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Código</th>
+                  <th class="label-cell">Detalle</th>
+                  <th class="label-cell">Valor</th>
+                  <th class="label-cell">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionCuotas.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      codigo = documento.id;
+      detalle = documento.data().detalle;
+      valor = documento.data().valor;
+      cuerpo += `<tr>
+      <td class="label-cell">${codigo}</td>
+      <td class="label-cell">${detalle}</td>
+      <td class="label-cell">${valor}</td>
+      <td class="label-cell divBotones"><button onclick="editarCuota('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarCuota('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
+      </tr>`
+    });
+    $$("#cuotasCoordinador").html(inicio + cuerpo + fin);
+  })
+  .catch(function(error) {
+    console.log("Error: " , error);
+  });
+}
+
+function editarCuota (id) {
+  mainView.router.navigate("/coordinador/editarCuota/");
+  coleccionCuotas.doc(id).get()
+  .then(function(cuota) {
+    $$("#detalleEditarCuota").val(cuota.data().detalle);
+    $$("#valorEditarCuota").val(cuota.data().valor);
+  })
+  .catch(function(error) {
+    console.log("Error ", error);
+  });
+}
+
+function funcionFinEditarCuota () {
+  detalle = $$("#detalleEditarCuota").val();
+  valor = $$("#valorEditarCuota").val();
+
+  coleccionCuotas.doc(codigo).update({detalle: detalle, valor: valor})
+  .then(function (documento) {
+    app.dialog.alert("Cuota editada");
+    mainView.router.navigate("/coordinador/");
+  })
+  .catch( function (error) {
+    console.log("Error " + error);
+  });
+}
+
+function borrarCuota(id) {
+  app.dialog.confirm("¿Desea eliminar la cuota?", function () {
+    confirmarBorrarCuota(id);
+  });
+}
+
+function confirmarBorrarCuota (id) {
+  coleccionCuotas.doc(id).delete()
+  .then(function() {
+    app.dialog.alert("Cuota eliminada");
+    mostrarCuotas();
   })
   .catch(function(error) {
     console.log("Error: ", error);
@@ -682,6 +775,25 @@ function funcionCrearClase () {
     coleccionClases.doc(idClase).set(datos)
     .then(function (documento) {
       app.dialog.alert("Clase creada exitosamente");
+      mainView.router.navigate("/coordinador/");
+    })
+    .catch( function (error) {
+      console.log("Error " + error);
+    })
+  }
+}
+
+function funcionCrearCuota () {
+  codigo = $$("#codigoAltaCuota").val();
+  detalle = $$("#detalleAltaCuota").val();
+  valor = $$("#valorAltaCuota").val();
+
+  if (detalle != "" && valor != "" && codigo != "") {
+    var idCuota = codigo;
+    datos = {detalle: detalle, valor: valor};
+    coleccionCuotas.doc(idCuota).set(datos)
+    .then(function (documento) {
+      app.dialog.alert("Cuota creada exitosamente");
       mainView.router.navigate("/coordinador/");
     })
     .catch( function (error) {
