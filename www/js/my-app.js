@@ -780,7 +780,6 @@ function mostrarMovimientos() {
 }
 
 function funcionFiltrarMovimientos (tipoMovimiento) {
-  console.log("hiciste click en: ", tipoMovimiento);
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
             <table>
@@ -799,10 +798,7 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
   var query = coleccionMovimientos.where("tipo", "==", tipoMovimiento);
   query.get()
   .then(function(querySnapshot) {
-    console.log("Aca entra al then");
-    console.log(querySnapshot);
     querySnapshot.forEach(function(documento) {
-      console.log("Aca entra al forEach");
       fecha = documento.data().fecha;
       monto = documento.data().monto;
       observaciones = documento.data().observaciones;
