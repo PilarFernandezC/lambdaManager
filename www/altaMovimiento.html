@@ -1,0 +1,85 @@
+<!-- We don't need a full layout in this file because this page will be parsed with Ajax.  -->
+<div class="page" data-name="altaMovimiento">
+    <div class="navbar">
+        <div class="navbar-inner sliding">
+        <div class="left">
+            <a href="#" class="link back">
+            <i class="icon icon-back"></i>
+            </a>
+        </div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="block">
+            <h2>Alta movimiento</h2>
+            <div class="grid grid-cols-1 grid-gap">
+                <div class="list list-strong-ios list-dividers-ios inset-ios">
+                    <ul>
+                        <li class="item-content item-input">
+                            <div class="item-inner">
+                              <div class="item-title item-label">Fecha del movimiento</div>
+                              <div class="item-input-wrap">
+                                <input type="date" id="fechaAltaMovimiento">
+                              </div>
+                            </div>
+                        </li>
+                        <li class="item-content item-input">
+                            <div class="item-inner">
+                              <div class="item-title item-label">Tipo de movimiento</div>
+                              <div class="item-input-wrap input-dropdown-wrap">
+                                <select id="tipoMovimiento">
+                                    <option value="" disabled selected>Seleccionar...</option>
+                                    <option value="Ingreso">Ingreso</option>
+                                    <option value="Egreso">Egreso</option>
+                                </select>
+                              </div>
+                            </div>
+                        </li>
+                        <li class="item-content item-input" id="inputCuotaMovimiento">
+                            <div class="item-inner">
+                              <div class="item-title item-label">Cuota</div>
+                              <div class="item-input-wrap input-dropdown-wrap">
+                                <select id="cuotaMovimiento"></select>
+                              </div>
+                            </div>
+                        </li>
+                        <li class="item-content item-input item-input-with-info" id="inputMontoMovimiento">
+                            <div class="item-inner">
+                              <div class="item-title item-label">Monto</div>
+                              <div class="item-input-wrap">
+                                <input type="text" id="montoMovimiento" placeholder="Monto" required validate pattern="[0-9]*"
+                                  data-error-message="Solo números">
+                                <span class="input-clear-button"></span>
+                                <div class="item-input-info"></div>
+                              </div>
+                            </div>
+                        </li>
+                        <li class="item-content item-input" id="inputAlumnoMovimiento">
+                            <div class="item-inner">
+                              <div class="item-title item-label">Alumno</div>
+                              <div class="item-input-wrap input-dropdown-wrap">
+                                <select id="alumnoMovimiento"></select>
+                              </div>
+                            </div>
+                        </li>
+                        <li class="item-content item-input item-input-with-info" id="inputObservacionesMovimiento">
+                            <div class="item-inner">
+                            <div class="item-title item-label">Observaciones</div>
+                            <div class="item-input-wrap">
+                                <input type="text" id="observacionesMovimiento" placeholder="Observaciones">
+                                <span class="input-clear-button"></span>
+                                <div class="item-input-info"></div>
+                            </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 grid-gap centrar">
+                <div>
+                    <button id="btnFinalizarAltaMovimiento" class="button button-raised button-fill color-teal">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
