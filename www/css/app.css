@@ -859,3 +859,16 @@ a {
   width: 80px;
   height: 80px;
 }
+
+#btnFiltrarIngresos.apretado, #btnFiltrarEgresos.apretado {
+  background-color: lightgray;
+}
+
+.botonesFiltrado {
+  display: flex;
+  margin: auto;
+}
+
+#btnFiltrarIngresos, #btnFiltrarEgresos {
+  margin: 5px;
+}
