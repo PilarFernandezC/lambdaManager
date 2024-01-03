@@ -162,6 +162,7 @@ $$(document).on('page:init', '.page[data-name="altaMovimiento"]', function (e) {
     funcionCuotaMovimiento(cuota);
   });
   $$("#alumnoMovimiento").on("change", function() {
+    $$("#inputFormaPagoMovimiento").show();
     $$("#inputObservacionesMovimiento").show();
   });
   $$("#btnFinalizarAltaMovimiento").on("click", funcionFinAltaMovimiento);
@@ -871,6 +872,7 @@ function funcionEsconderInputs () {
   $$("#inputAlumnoMovimiento").hide();
   $$("#inputMontoMovimiento").hide();
   $$("#inputObservacionesMovimiento").hide();
+  $$("#inputFormaPagoMovimiento").hide();
 }
 
 function funcionTipoMovimiento (movimiento) {
@@ -879,6 +881,7 @@ function funcionTipoMovimiento (movimiento) {
     cargarCuotasMovimiento();
   } else {
     $$("#inputMontoMovimiento").show();
+    $$("#inputFormaPagoMovimiento").show();
     $$("#inputObservacionesMovimiento").show();
   }
 }
@@ -945,6 +948,7 @@ function funcionFinAltaMovimiento () {
   movimiento = $$("#tipoMovimiento").val();
   monto = $$("#montoMovimiento").val();
   alumno = $$("#alumnoMovimiento").val();
+  formaPago = $$("#formaPagoMovimiento").val();
   if (movimiento === "Egreso") {
     monto = "-" + monto;
   }
@@ -960,7 +964,7 @@ function funcionFinAltaMovimiento () {
     });
   }
   if(fecha != "" && observaciones != "" && monto != "" && movimiento != "") {
-    datos = {fecha: fecha, monto: monto, observaciones: observaciones, tipo: movimiento};
+    datos = {fecha: fecha, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago};
     coleccionMovimientos.add(datos)
     .then(function (documento) {
       app.dialog.alert("Movimiento creado exitosamente");
