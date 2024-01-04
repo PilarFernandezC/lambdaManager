@@ -220,11 +220,15 @@ function funcionRegistro () {
     .catch((error) => {
       var errorCode = error.code;
       var errorMessage = error.message;
-      console.error(errorCode);
-      console.error(errorMessage);
-      if (errorCode == "auth/email-already-in-use") {
-        console.error("El email ya se encuentra registrado");
-        }
+      switch (errorCode) {
+        case "auth/email-already-in-use": app.dialog.alert("El email ya se encuentra registrado");
+        break;
+        case "auth/invalid-email": app.dialog.alert("El email no es válido");
+        break;
+        case "auth/weak-password": app.dialog.alert("La contraseña debe tener al menos 6 caracteres");
+        break;
+        default:
+      }
     });
   }
 }
@@ -312,6 +316,9 @@ function mostrarAlumnos () {
           </div>`;
   query.get()
   .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#alumnosCoordinador").html(`<p>No hay información para mostrar.</p>`);
+    } else {
     querySnapshot.forEach(function(documento) {
       nombre = documento.data().nombre;
       apellido = documento.data().apellido;
@@ -324,6 +331,7 @@ function mostrarAlumnos () {
       </tr>`
     });
     $$("#alumnosCoordinador").html(inicio + cuerpo + fin);
+    }
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -462,6 +470,9 @@ function mostrarEntrenadores () {
           </div>`;
   query.get()
   .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#entrenadoresCoordinador").html(`<p>No hay información para mostrar.</p>`);
+    } else {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
       apellido = doc.data().apellido;
@@ -473,6 +484,7 @@ function mostrarEntrenadores () {
       </tr>`
     });
     $$("#entrenadoresCoordinador").html(inicio + cuerpo + fin);
+    }
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -572,6 +584,9 @@ function mostrarClases () {
           </div>`;
   coleccionClases.get()
   .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#clasesCoordinador").html(`<p>No hay información para mostrar.</p>`);
+    } else {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
       codigo = doc.id;
@@ -583,6 +598,7 @@ function mostrarClases () {
       </tr>`
     });
     $$("#clasesCoordinador").html(inicio + cuerpo + fin);
+    }
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -666,17 +682,21 @@ function mostrarInformes () {
           </div>`;
   coleccionInformes.get()
   .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      autor = documento.data().autor;
-      detalle = documento.data().detalle;
-      prioridad = documento.data().prioridad;
-      cuerpo += `<tr>
-      <td class="label-cell">${autor}</td>
-      <td class="label-cell">${detalle}</td>
-      <td class="label-cell">${prioridad}</td>
-      </tr>`;
-    })
-    $$("#informesCoordinador").html(inicio + cuerpo + fin);
+    if (querySnapshot.size === 0) {
+      $$("#informesCoordinador").html(`<p>No hay información para mostrar.</p>`);
+    } else {
+      querySnapshot.forEach(function(documento) {
+        autor = documento.data().autor;
+        detalle = documento.data().detalle;
+        prioridad = documento.data().prioridad;
+        cuerpo += `<tr>
+        <td class="label-cell">${autor}</td>
+        <td class="label-cell">${detalle}</td>
+        <td class="label-cell">${prioridad}</td>
+        </tr>`;
+      })
+      $$("#informesCoordinador").html(inicio + cuerpo + fin);
+    }
   })
   .catch(function(error) {
     console.log("Error: ", error);
@@ -701,6 +721,9 @@ function mostrarCuotas () {
           </div>`;
   coleccionCuotas.get()
   .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#cuotasCoordinador").html(`<p>No hay información para mostrar.</p>`);
+    } else {
     querySnapshot.forEach(function(documento) {
       clase = documento.id;
       valor = documento.data().valor;
@@ -712,6 +735,7 @@ function mostrarCuotas () {
       </tr>`
     });
     $$("#cuotasCoordinador").html(inicio + cuerpo + fin);
+  }
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -798,17 +822,21 @@ function mostrarMovimientos() {
           </div>`;
   coleccionMovimientos.get()
   .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      fecha = documento.data().fecha;
-      monto = documento.data().monto;
-      observaciones = documento.data().observaciones;
-      cuerpo += `<tr>
-      <td class="label-cell">${fecha}</td>
-      <td class="label-cell">${monto}</td>
-      <td class="label-cell">${observaciones}</td>
-      </tr>`;
-    })
-    $$("#movimientosCaja").html(inicio + cuerpo + fin);
+    if (querySnapshot.size === 0) {
+      $$("#movimientosCaja").html(`<p>No hay información para mostrar.</p>`);
+    } else {
+      querySnapshot.forEach(function(documento) {
+        fecha = documento.data().fecha;
+        monto = documento.data().monto;
+        observaciones = documento.data().observaciones;
+        cuerpo += `<tr>
+        <td class="label-cell">${fecha}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${observaciones}</td>
+        </tr>`;
+      })
+      $$("#movimientosCaja").html(inicio + cuerpo + fin);
+    }
   })
   .catch(function(error) {
     console.log("Error: ", error);
@@ -1005,10 +1033,14 @@ function funcionCrearAlumno () {
     .catch((error) => {
       var errorCode = error.code;
       var errorMessage = error.message;
-      console.error(errorCode);
-      console.error(errorMessage);
-      if (errorCode == "auth/email-already-in-use") {
-        console.error("El email ya se encuentra registrado");
+      switch (errorCode) {
+        case "auth/email-already-in-use": app.dialog.alert("El email ya se encuentra registrado");
+        break;
+        case "auth/invalid-email": app.dialog.alert("El email no es válido");
+        break;
+        case "auth/weak-password": app.dialog.alert("La contraseña debe tener al menos 6 caracteres");
+        break;
+        default:
       }
     });
   }
@@ -1043,10 +1075,14 @@ function funcionCrearEntrenador () {
     .catch((error) => {
       var errorCode = error.code;
       var errorMessage = error.message;
-      console.error(errorCode);
-      console.error(errorMessage);
-      if (errorCode == "auth/email-already-in-use") {
-        console.error("El email ya se encuentra registrado");
+      switch (errorCode) {
+        case "auth/email-already-in-use": app.dialog.alert("El email ya se encuentra registrado");
+        break;
+        case "auth/invalid-email": app.dialog.alert("El email no es válido");
+        break;
+        case "auth/weak-password": app.dialog.alert("La contraseña debe tener al menos 6 caracteres");
+        break;
+        default:
       }
     });
   }
