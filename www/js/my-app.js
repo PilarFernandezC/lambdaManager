@@ -15,7 +15,7 @@ var app = new Framework7({
     // Add default routes
     routes: [
       {path: '/about/', url: 'about.html'},
-      {path: '/login/', url: 'login.html'},
+      {path: '/registro1/', url: 'registro1.html'},
       {path: '/index/', url: 'index.html'},
       {path: '/registro/', url: 'registro.html'},
       {path: '/coordinador/', url: 'coordinador.html'},
@@ -65,15 +65,15 @@ $$(document).on('page:init', function (e) {
 
 // Option 2. Using live 'page:init' event handlers for each page
 $$(document).on('page:init', '.page[data-name="index"]', function (e) {
-  $$("#btnRegistro").on("click", funcionRegistro);
+  $$("#btnLogin").on("click", funcionLogin);
 })
 
 $$(document).on('page:init', '.page[data-name="registro"]', function (e) {
   $$("#btnFinalizarRegistro").on("click", funcionFinRegistro);
 })
 
-$$(document).on('page:init', '.page[data-name="login"]', function (e) {
-  $$("#btnLogin").on("click", funcionLogin);
+$$(document).on('page:init', '.page[data-name="registro1"]', function (e) {
+  $$("#btnRegistro").on("click", funcionRegistro);
 })
 
 $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
@@ -219,6 +219,7 @@ $$(document).on('page:init', '.page[data-name="about"]', function (e) {
 
 // FUNCIONES
 function funcionRegistro () {
+  console.log("entra a la funcion o no?")
   email = $$("#emailIndex").val();
   contrasena = $$("#contrasenaIndex").val();
   if (email != "" && contrasena != "") {
@@ -254,7 +255,7 @@ function funcionFinRegistro () {
   coleccionUsuarios.doc(idUsuario).set(datos)
   .then(function (documento) {
     app.dialog.alert("Usuario registrado");
-    mainView.router.navigate("/login/");
+    mainView.router.navigate("/index/");
   })
   .catch( function (error) {
     console.log("Error " + error);
