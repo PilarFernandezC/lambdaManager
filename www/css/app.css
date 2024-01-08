@@ -869,6 +869,12 @@ a {
   margin: auto;
 }
 
-#btnFiltrarIngresos, #btnFiltrarEgresos {
+#btnFiltrarIngresos, #btnFiltrarEgresos, #btnAgregarClaseAlumno, #btnFinalizarEditarAlumno {
   margin: 5px;
 }
+
+.selectBoton {
+  display: flex;
+  align-items: center;
+}
+
