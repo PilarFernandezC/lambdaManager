@@ -28,6 +28,7 @@ var app = new Framework7({
       {path: '/coordinador/altaClase/', url: 'altaClase.html'},
       {path: '/coordinador/altaCuota/', url: 'altaCuota.html'},
       {path: '/coordinador/editarAlumno/', url: 'editarAlumno.html'},
+      {path: '/coordinador/clasesAlumnos/', url: 'clasesAlumnos.html'},
       {path: '/coordinador/editarEntrenador/', url: 'editarEntrenador.html'},
       {path: '/coordinador/editarClase/', url: 'editarClase.html'},
       {path: '/coordinador/editarCuota/', url: 'editarCuota.html'},
@@ -40,7 +41,7 @@ var app = new Framework7({
 
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
-var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clase, iD, autor, nombreSaludo, detalle, valor, codigo;
+var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clases, iD, autor, nombreSaludo, detalle, valor, codigo, cont;
 var coleccionUsuarios = db.collection("Usuarios");
 var coleccionClases = db.collection("Clases");
 var coleccionAlumnos = db.collection("Alumnos");
@@ -121,6 +122,11 @@ $$(document).on('page:init', '.page[data-name="editarAlumno"]', function (e) {
   $$("#btnFinalizarEditarAlumno").on("click", funcionFinEditarAlumno);
 })
 
+$$(document).on('page:init', '.page[data-name="clasesAlumnos"]', function (e) {
+  $$("#btnAgregarClaseAlumno").on("click", agregarNuevoSelect);
+  $$("#btnFinalizarAgregarClaseAlumno").on("click", funcionFinAgregarClaseAlumno);
+})
+
 $$(document).on('page:init', '.page[data-name="editarEntrenador"]', function (e) {
   $$("#btnFinalizarEditarEntrenador").on("click", funcionFinEditarEntrenador);
 })
@@ -157,22 +163,26 @@ $$(document).on('page:init', '.page[data-name="altaMovimiento"]', function (e) {
     var movimiento = $$(this).val();
     funcionTipoMovimiento(movimiento);
   });
+  $$("#alumnoMovimiento").on("change", function() {
+    var alumno = $$(this).val();
+    cargarCuotasMovimiento(alumno);
+    crearAlumnoPago(alumno);
+    $$("#inputCuotaMovimiento").show();
+  });
   $$("#cuotaMovimiento").on("change", function() {
     var cuota = $$(this).val();
     funcionCuotaMovimiento(cuota);
   });
-  $$("#alumnoMovimiento").on("change", function() {
-    $$("#inputFormaPagoMovimiento").show();
-    $$("#inputObservacionesMovimiento").show();
-  });
+
   $$("#btnFinalizarAltaMovimiento").on("click", funcionFinAltaMovimiento);
 })
 
 $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
   funcionSaludoAlumno();
-  mostrarEntrenadoresAlumno();
   mostrarClasesAlumno();
+  mostrarEntrenadoresAlumno();
   mostrarObjetivosAlumno();
+  mostrarPagosAlumno();
   $$("#btnAltaObjetivo").on("click", function() {
     mainView.router.navigate("/alumno/altaObjetivo/");
   });
@@ -275,8 +285,11 @@ function funcionLogin () {
     .catch((error) => {
       var errorCode = error.code;
       var errorMessage = error.message;
-      console.error(errorCode);
-      console.error(errorMessage);
+      switch (errorCode) {
+        case "auth/internal-error": app.dialog.alert("Usuario o contraseña incorrectos");
+        break;
+        default:
+      }
     });
   }
 }
@@ -317,7 +330,7 @@ function mostrarAlumnos () {
   query.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
-      $$("#alumnosCoordinador").html(`<p>No hay información para mostrar.</p>`);
+      $$("#alumnosCoordinador").html(`<p>No hay alumnos registrados</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
       nombre = documento.data().nombre;
@@ -327,6 +340,7 @@ function mostrarAlumnos () {
       <td class="label-cell">${nombre}</td>
       <td class="label-cell">${apellido}</td>
       <td class="label-cell divBotones"><button onclick="verAlumno('${alumno}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">eye</i></button><button onclick="editarAlumno('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
+      </button><button onclick="asignarClasesAlumnos('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">plus</i></button>
       <button onclick="borrarAlumno('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
@@ -348,7 +362,9 @@ function verAlumno (alumno) {
                 <tr>
                   <th class="label-cell">Alumno</th>
                   <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Cuota</th>
                   <th class="label-cell">Monto</th>
+                  <th class="label-cell">Observaciones</th>
                 </tr>
               </thead>
               <tbody>`;
@@ -361,10 +377,14 @@ function verAlumno (alumno) {
     querySnapshot.forEach(function (documento) {
       fecha = documento.data().fecha;
       monto = documento.data().monto;
+      cuota = documento.data().cuota;
+      observaciones = documento.data().observaciones;
       cuerpo += `<tr>
       <td class="label-cell">${alumno}</td>
       <td class="label-cell">${fecha}</td>
+      <td class="label-cell">${cuota}</td>
       <td class="label-cell">${monto}</td>
+      <td class="label-cell">${observaciones}</td>
       </tr>`
     })
     $$("#nombreAlumno").html("Pagos de " + alumno);
@@ -375,9 +395,8 @@ function verAlumno (alumno) {
   });
 }
 
-function editarAlumno (id) {
+function editarAlumno(id) {
   mainView.router.navigate("/coordinador/editarAlumno/");
-  var lista = "";
   email = id;
   coleccionUsuarios.doc(id).get()
   .then(function(alumno) {
@@ -389,16 +408,118 @@ function editarAlumno (id) {
   .catch(function(error) {
     console.log("Error ", error);
   });
-  coleccionClases.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      var nombreClase = documento.data().nombre;
-      lista += `<option value='${nombreClase}'>${nombreClase}</option>`;
+}
+
+function agregarNuevoSelect() {
+  var i = 1;
+  if (cont <= 5) {
+    var lista = "";
+    coleccionClases.get()
+    .then(function(querySnapshot) {
+      querySnapshot.forEach(function(documento) {
+          var nombreClase = documento.data().nombre;
+          lista += `<option value='${nombreClase}'>${nombreClase}</option>`;
+      });
+      while ((($$("#selectClase"+i).val()) != undefined) && i<7) {
+        i++
+      }
+      var nuevoSelect = `<div class="selectBoton" id="clase${i}"><ul><li class="item-content item-input">
+                  <div class="item-inner">
+                    <div class="item-title item-label">Clases</div>
+                    <div class="item-input-wrap input-dropdown-wrap">
+                      <select placeholder="Seleccionar" id="selectClase${i}">
+                          <option value="" disabled selected>Seleccionar...</option>
+                          ${lista}
+                      </select>
+                    </div>
+                  </div>
+              </li></ul>
+              <button onclick="eliminarSelect('clase${i}')" class="button button-raised button-fill color-white botones">
+                      <i class="icon f7-icons">trash</i>
+              </button></div>`;
+      $$("#listaClases").append(nuevoSelect);
+      cont++;
     })
-    $$("#agregarClaseAlumno").append(lista);
+    .catch(function(error) {
+      console.log("Error: " , error);
+    });
+  } else {
+    app.dialog.alert("Llegaste al límite de clases asignadas");
+  }
+}
+
+function verificarClasesAsignadas(id) {
+  coleccionAlumnos.doc(id).get()
+  .then(function(documento) {
+      if (documento.exists && documento.data().clase && documento.data().clase.length > 0) {
+        cont = documento.data().clase.length;
+        clasesAsignadas = documento.data().clase;
+        for (var i=0; i<cont; i++) {
+          generarSelect(clasesAsignadas[i], i+1);
+        }
+      } else {
+        cont = 0;
+      }
   })
   .catch(function(error) {
-    console.log("Error: " , error);
+      console.log("Error: ", error);
+  });
+}
+
+function generarSelect(clase, i) {
+  var nuevoSelect = `<div class="selectBoton" id="clase${i}"><ul><li class="item-content item-input">
+                  <div class="item-inner">
+                    <div class="item-title item-label">Clases</div>
+                    <div class="item-input-wrap input-dropdown-wrap">
+                      <select placeholder="Seleccionar" id="selectClase${i}">
+                      <option value='${clase}'>${clase}</option>;
+                      </select>
+                    </div>
+                  </div>
+              </li></ul>
+              <button onclick="eliminarSelect('clase${i}')" class="button button-raised button-fill color-white botones">
+                      <i class="icon f7-icons">trash</i>
+              </button></div>`;
+  $$("#listaClases").append(nuevoSelect);
+}
+
+function eliminarSelect(id) {
+  if (cont > 0) {
+    $$("#"+(id)).remove();
+    cont--;
+  }
+}
+
+function asignarClasesAlumnos (id) {
+  mainView.router.navigate("/coordinador/clasesAlumnos/");
+  email = id;
+  coleccionUsuarios.doc(id).get()
+  .then(function(documento) {
+    nombre = documento.data().nombre;
+    apellido = documento.data().apellido;
+    $$("#nombreAlumnoClases").html("Asignar clases a " + nombre + " " + apellido);
+  })
+  .catch(function(error) {
+    console.log("Error ", error);
+  });
+  verificarClasesAsignadas(id);
+}
+
+function funcionFinAgregarClaseAlumno () {
+  clases = [];
+  for (var i=1; i<=6; i++) {
+    if (($$("#selectClase"+i).val()) != undefined) {
+      var clase = $$("#selectClase"+i).val();
+      clases.push(clase);
+    }
+  }
+  coleccionAlumnos.doc(email).set({clase: clases})
+  .then(function() {
+    app.dialog.alert("Clase asignada correctamente");
+    mainView.router.navigate("/coordinador/");
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
   });
 }
 
@@ -407,16 +528,6 @@ function funcionFinEditarAlumno () {
   apellido = $$("#apellidoEditarAlumno").val();
   telefono = $$("#telefonoEditarAlumno").val();
   fechaNacimiento = $$("#fechaNacimientoEditarAlumno").val();
-  clase = $$("#agregarClaseAlumno").val();
-
-  coleccionAlumnos.doc(email).set({clase: clase})
-  .then(function() {
-    console.log("Documento creado");
-  })
-  .catch(function(error) {
-    console.log("Error: ", error);
-  });
-
   coleccionUsuarios.doc(email).update({nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento})
   .then(function (documento) {
     app.dialog.alert("Usuario editado");
@@ -471,7 +582,7 @@ function mostrarEntrenadores () {
   query.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
-      $$("#entrenadoresCoordinador").html(`<p>No hay información para mostrar.</p>`);
+      $$("#entrenadoresCoordinador").html(`<p>No hay entrenadores registrados</p>`);
     } else {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
@@ -585,7 +696,7 @@ function mostrarClases () {
   coleccionClases.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
-      $$("#clasesCoordinador").html(`<p>No hay información para mostrar.</p>`);
+      $$("#clasesCoordinador").html(`<p>No hay clases creadas</p>`);
     } else {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
@@ -683,7 +794,7 @@ function mostrarInformes () {
   coleccionInformes.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
-      $$("#informesCoordinador").html(`<p>No hay información para mostrar.</p>`);
+      $$("#informesCoordinador").html(`<p>No hay informes creados</p>`);
     } else {
       querySnapshot.forEach(function(documento) {
         autor = documento.data().autor;
@@ -722,7 +833,7 @@ function mostrarCuotas () {
   coleccionCuotas.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
-      $$("#cuotasCoordinador").html(`<p>No hay información para mostrar.</p>`);
+      $$("#cuotasCoordinador").html(`<p>No hay cuotas creadas</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
       clase = documento.id;
@@ -812,6 +923,9 @@ function mostrarMovimientos() {
                 <tr>
                   <th class="label-cell">Fecha</th>
                   <th class="label-cell">Monto</th>
+                  <th class="label-cell">Alumno</th>
+                  <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Forma de pago</th>
                   <th class="label-cell">Observaciones</th>
                 </tr>
               </thead>
@@ -823,15 +937,21 @@ function mostrarMovimientos() {
   coleccionMovimientos.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
-      $$("#movimientosCaja").html(`<p>No hay información para mostrar.</p>`);
+      $$("#movimientosCaja").html(`<p>No hay movimientos registrados</p>`);
     } else {
       querySnapshot.forEach(function(documento) {
         fecha = documento.data().fecha;
         monto = documento.data().monto;
         observaciones = documento.data().observaciones;
+        alumno = documento.data().alumno;
+        cuota = documento.data().cuota;
+        formaPago = documento.data().formaPago;
         cuerpo += `<tr>
         <td class="label-cell">${fecha}</td>
         <td class="label-cell">${monto}</td>
+        <td class="label-cell">${alumno}</td>
+        <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${formaPago}</td>
         <td class="label-cell">${observaciones}</td>
         </tr>`;
       })
@@ -851,6 +971,9 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
                 <tr>
                   <th class="label-cell">Fecha</th>
                   <th class="label-cell">Monto</th>
+                  <th class="label-cell">Alumno</th>
+                  <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Forma de pago</th>
                   <th class="label-cell">Observaciones</th>
                 </tr>
               </thead>
@@ -863,15 +986,21 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
   query.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
-      $$("#movimientosCaja").html(`<p>No hay información para mostrar.</p>`);
+      $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
       fecha = documento.data().fecha;
-      monto = documento.data().monto;
-      observaciones = documento.data().observaciones;
+        monto = documento.data().monto;
+        observaciones = documento.data().observaciones;
+        alumno = documento.data().alumno;
+        cuota = documento.data().cuota;
+        formaPago = documento.data().formaPago;
       cuerpo += `<tr>
       <td class="label-cell">${fecha}</td>
       <td class="label-cell">${monto}</td>
+      <td class="label-cell">${alumno}</td>
+      <td class="label-cell">${cuota}</td>
+      <td class="label-cell">${formaPago}</td>
       <td class="label-cell">${observaciones}</td>
       </tr>`;
     })
@@ -905,8 +1034,8 @@ function funcionEsconderInputs () {
 
 function funcionTipoMovimiento (movimiento) {
   if (movimiento === "Ingreso") {
-    $$("#inputCuotaMovimiento").show();
-    cargarCuotasMovimiento();
+    $$("#inputAlumnoMovimiento").show();
+    cargarAlumnosMovimiento();
   } else {
     $$("#inputMontoMovimiento").show();
     $$("#inputFormaPagoMovimiento").show();
@@ -914,14 +1043,15 @@ function funcionTipoMovimiento (movimiento) {
   }
 }
 
-function cargarCuotasMovimiento () {
+function cargarCuotasMovimiento (alumno) {
   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
-  coleccionCuotas.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      var nombreCuota = documento.id;
+  coleccionAlumnos.doc(alumno).get()
+  .then(function(documento) {
+    clases = documento.data().clase;
+    for (i=0; i <= (clases.length -1); i++) {
+      nombreCuota = clases[i];
       lista += `<option value='${nombreCuota}'>${nombreCuota}</option>`;
-    })
+    }
     $$("#cuotaMovimiento").append(lista);
   })
   .catch(function(error) {
@@ -939,62 +1069,67 @@ function funcionCuotaMovimiento (cuota) {
   .catch(function(error) {
     console.log("Error: " , error);
   });
-  $$("#inputAlumnoMovimiento").show();
-  cargarAlumnosMovimiento(cuota);
+  $$("#inputFormaPagoMovimiento").show();
+  $$("#inputObservacionesMovimiento").show();
 }
 
-function cargarAlumnosMovimiento (cuota) {
+function cargarAlumnosMovimiento() {
   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
-  coleccionAlumnos.where("clase", "==", cuota).get()
-    .then(function(querySnapshot) {
-      var consultasUsuarios = [];
-      querySnapshot.forEach(function(documento) {
+  var consultasUsuarios = [];
+  coleccionAlumnos.get()
+    .then(function (querySnapshot) {
+      querySnapshot.forEach(function (documento) {
         var mailAlumno = documento.id;
-        consultasUsuarios.push(
-          coleccionUsuarios.doc(mailAlumno).get()
-          .then(function(documento) {
-            nombre = documento.data().nombre;
-            apellido = documento.data().apellido;
+        var consultaUsuario = coleccionUsuarios.doc(mailAlumno).get()
+          .then(function (documento) {
+            var nombre = documento.data().nombre;
+            var apellido = documento.data().apellido;
             var nombreAlumno = nombre + " " + apellido;
-            lista += `<option value='${nombreAlumno}'>${nombreAlumno}</option>`;
+            lista += `<option value='${mailAlumno}'>${nombreAlumno}</option>`;
           })
-        );
+          .catch(function (error) {
+            console.log("Error: ", error);
+          });
+        consultasUsuarios.push(consultaUsuario);
       });
       return Promise.all(consultasUsuarios);
     })
-    .then(function() {
+    .then(function () {
       $$("#alumnoMovimiento").html(lista);
     })
-    .catch(function(error) {
+    .catch(function (error) {
       console.log("Error: ", error);
     });
 }
 
-function funcionFinAltaMovimiento () {
+function funcionFinAltaMovimiento() {
   fecha = $$("#fechaAltaMovimiento").val();
   observaciones = $$("#observacionesMovimiento").val();
   movimiento = $$("#tipoMovimiento").val();
   monto = $$("#montoMovimiento").val();
   alumno = $$("#alumnoMovimiento").val();
   formaPago = $$("#formaPagoMovimiento").val();
+  cuota = $$("#cuotaMovimiento").val();
   if (movimiento === "Egreso") {
     monto = "-" + monto;
+    alumnoPago = "-";
+    cuota = "-";
   }
-  if (alumno != "" && movimiento === "Ingreso") {
-    var subcoleccionPagos = coleccionPagos.doc(alumno).collection("pagos");
-    datosPago = {fecha: fecha, monto: monto};
+  if (movimiento === "Ingreso") {
+    var subcoleccionPagos = coleccionPagos.doc(alumnoPago).collection("pagos");
+    datosPago = { fecha: fecha, monto: monto, cuota: cuota, observaciones: observaciones };
     subcoleccionPagos.add(datosPago)
-    .then(function (documento) {
-      console.log("Cree el pago correctamente");
+    .then(function(documento) {
+      console.log("pago creado correctamente");
     })
-    .catch(function (error) {
+    .catch( function (error) {
       console.log("Error " + error);
     });
   }
-  if(fecha != "" && observaciones != "" && monto != "" && movimiento != "") {
-    datos = {fecha: fecha, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago};
+  if (fecha !== "" && observaciones !== "" && monto !== "" && movimiento !== "" && alumnoPago !== "" && cuota !== "" && formaPago !== "") {
+    datos = { fecha: fecha, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago, cuota: cuota, alumno: alumnoPago };
     coleccionMovimientos.add(datos)
-    .then(function (documento) {
+    .then(function(documento) {
       app.dialog.alert("Movimiento creado exitosamente");
       mainView.router.navigate("/coordinador/");
     })
@@ -1002,6 +1137,18 @@ function funcionFinAltaMovimiento () {
       console.log("Error " + error);
     });
   }
+}
+
+function crearAlumnoPago (alumno) {
+  coleccionUsuarios.doc(alumno).get()
+    .then(function (documento) {
+      nombre = documento.data().nombre;
+      apellido = documento.data().apellido;
+      alumnoPago = nombre + " " + apellido;
+    })
+    .catch( function (error) {
+      console.log("Error " + error);
+    });
 }
 
 function funcionCrearAlumno () {
@@ -1289,19 +1436,12 @@ function mostrarClasesEntrenador () {
   });
 }
 
-function mostrarClasesAlumno () {
-  coleccionAlumnos.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.id == email) {
-        clase = documento.data().clase;
-      }
-    });
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
-  var inicio, cuerpo, fin;
+async function buscarClasesAlumno() {
+  const documento = await coleccionAlumnos.doc(email).get();
+  return documento.data().clase;
+}
+
+async function mostrarClasesAlumno() {
   inicio = `<div class="data-table">
             <table>
               <thead>
@@ -1315,23 +1455,26 @@ function mostrarClasesAlumno () {
   fin = `</tbody>
             </table>
           </div>`;
-  coleccionClases.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.data().nombre == clase) {
+  const clases = await buscarClasesAlumno();
+  for (var i = 0; i < clases.length; i++) {
+    var clase = clases[i];
+    var query = coleccionClases.where("nombre", "==", clase)
+    query.get()
+    .then(function(querySnapshot) {
+      querySnapshot.forEach(function(documento) {
         nombre = documento.data().nombre;
         codigo = documento.id;
         cuerpo += `<tr>
         <td class="label-cell">${codigo}</td>
         <td class="label-cell">${nombre}</td>
-        </tr>`
-      }
+        </tr>`;
+      })
+      $$("#clasesAlumno").html(inicio + cuerpo + fin);
     })
-    $$("#clasesAlumno").html(inicio + cuerpo + fin);
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
+    .catch(function(error) {
+      console.log("Error: " , error);
+    });
+  }
 }
 
 function mostrarEntrenadoresAlumno () {
@@ -1393,6 +1536,53 @@ function mostrarEntrenadoresAlumno () {
   });
 }
 
+function mostrarPagosAlumno() {
+  var inicio, cuerpo, fin, nombreAlumno;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Monto</th>
+                  <th class="label-cell">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+
+  coleccionUsuarios.doc(email).get()
+  .then(function (documento) {
+    nombre = documento.data().nombre;
+    apellido = documento.data().apellido;
+    nombreAlumno = nombre + " " + apellido;
+    var subcoleccionPagos = coleccionPagos.doc(nombreAlumno).collection('pagos');
+    return subcoleccionPagos.get();
+  })
+  .then(function (querySnapshot) {
+    querySnapshot.forEach(function (documento) {
+      fecha = documento.data().fecha;
+      monto = documento.data().monto;
+      cuota = documento.data().cuota;
+      observaciones = documento.data().observaciones;
+      cuerpo += `<tr>
+        <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${fecha}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${observaciones}</td>
+      </tr>`;
+    });
+
+    $$("#pagosDelAlumno").html(inicio + cuerpo + fin);
+  })
+  .catch(function (error) {
+    console.log("Error: ", error);
+  });
+}
+
 function mostrarObjetivosAlumno () {
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
@@ -1421,15 +1611,19 @@ function mostrarObjetivosAlumno () {
   });
   coleccionObjetivos.get()
   .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.data().autor == (nombre + " " + apellido)) {
-        detalle = documento.data().detalle;
-        cuerpo += `<tr>
-                <td class="label-cell">${detalle}</td>
-                </tr>`;
-      }
-      $$("#objetivosAlumno").html(inicio + cuerpo + fin);
-    })
+    if (querySnapshot.size === 0) {
+      $$("#objetivosAlumno").html(`<p>No hay objetivos creados</p>`);
+    } else {
+      querySnapshot.forEach(function(documento) {
+        if (documento.data().autor == (nombre + " " + apellido)) {
+          detalle = documento.data().detalle;
+          cuerpo += `<tr>
+                  <td class="label-cell">${detalle}</td>
+                  </tr>`;
+        }
+        $$("#objetivosAlumno").html(inicio + cuerpo + fin);
+      })
+    }
   })
   .catch(function(error) {
     console.log("Error: " , error);
