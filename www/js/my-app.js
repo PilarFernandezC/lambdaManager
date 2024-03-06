@@ -219,7 +219,6 @@ $$(document).on('page:init', '.page[data-name="about"]', function (e) {
 
 // FUNCIONES
 function funcionRegistro () {
-  console.log("entra a la funcion o no?")
   email = $$("#emailIndex").val();
   contrasena = $$("#contrasenaIndex").val();
   if (email != "" && contrasena != "") {
@@ -1437,11 +1436,6 @@ function mostrarClasesEntrenador () {
   });
 }
 
-async function buscarClasesAlumno() {
-  const documento = await coleccionAlumnos.doc(email).get();
-  return documento.data().clase;
-}
-
 async function mostrarClasesAlumno() {
   inicio = `<div class="data-table">
             <table>
@@ -1456,7 +1450,8 @@ async function mostrarClasesAlumno() {
   fin = `</tbody>
             </table>
           </div>`;
-  const clases = await buscarClasesAlumno();
+  const documento = await coleccionAlumnos.doc(email).get();
+  const clases = documento.data().clase;
   for (var i = 0; i < clases.length; i++) {
     var clase = clases[i];
     var query = coleccionClases.where("nombre", "==", clase)
