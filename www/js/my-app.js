@@ -965,19 +965,34 @@ function mostrarMovimientos() {
 
 function funcionFiltrarMovimientos (tipoMovimiento) {
   var inicio, cuerpo, fin;
-  inicio = `<div class="data-table">
+  if (tipoMovimiento === "Egreso") {
+    inicio = `<div class="data-table">
             <table>
               <thead>
                 <tr>
                   <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Concepto</th>
                   <th class="label-cell">Monto</th>
-                  <th class="label-cell">Alumno</th>
-                  <th class="label-cell">Cuota</th>
                   <th class="label-cell">Forma de pago</th>
                   <th class="label-cell">Observaciones</th>
                 </tr>
               </thead>
               <tbody>`;
+  } else {
+    inicio = `<div class="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="label-cell">Fecha</th>
+                    <th class="label-cell">Monto</th>
+                    <th class="label-cell">Alumno</th>
+                    <th class="label-cell">Cuota</th>
+                    <th class="label-cell">Forma de pago</th>
+                    <th class="label-cell">Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+  }
   cuerpo = ``;
   fin = `</tbody>
             </table>
@@ -989,20 +1004,31 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
       $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
-      fecha = documento.data().fecha;
+        fecha = documento.data().fecha;
         monto = documento.data().monto;
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
         formaPago = documento.data().formaPago;
-      cuerpo += `<tr>
-      <td class="label-cell">${fecha}</td>
-      <td class="label-cell">${monto}</td>
-      <td class="label-cell">${alumno}</td>
-      <td class="label-cell">${cuota}</td>
-      <td class="label-cell">${formaPago}</td>
-      <td class="label-cell">${observaciones}</td>
-      </tr>`;
+        conceptoEgreso = documento.data().conceptoEgreso;
+        if (tipoMovimiento === "Egreso") {
+          cuerpo += `<tr>
+          <td class="label-cell">${fecha}</td>
+          <td class="label-cell">${conceptoEgreso}</td>
+          <td class="label-cell">${monto}</td>
+          <td class="label-cell">${formaPago}</td>
+          <td class="label-cell">${observaciones}</td>
+          </tr>`;
+        } else {
+          cuerpo += `<tr>
+          <td class="label-cell">${fecha}</td>
+          <td class="label-cell">${monto}</td>
+          <td class="label-cell">${alumno}</td>
+          <td class="label-cell">${cuota}</td>
+          <td class="label-cell">${formaPago}</td>
+          <td class="label-cell">${observaciones}</td>
+          </tr>`;
+        }
     })
     $$("#movimientosCaja").html(inicio + cuerpo + fin);
   }
@@ -1025,6 +1051,7 @@ function funcionActualizarFiltros () {
 }
 
 function funcionEsconderInputs () {
+  $$("#inputEgreso").hide();
   $$("#inputCuotaMovimiento").hide();
   $$("#inputAlumnoMovimiento").hide();
   $$("#inputMontoMovimiento").hide();
@@ -1037,6 +1064,7 @@ function funcionTipoMovimiento (movimiento) {
     $$("#inputAlumnoMovimiento").show();
     cargarAlumnosMovimiento();
   } else {
+    $$("#inputEgreso").show();
     $$("#inputMontoMovimiento").show();
     $$("#inputFormaPagoMovimiento").show();
     $$("#inputObservacionesMovimiento").show();
@@ -1103,6 +1131,7 @@ function cargarAlumnosMovimiento() {
 }
 
 function funcionFinAltaMovimiento() {
+  conceptoEgreso = $$("#conceptoEgreso").val();
   fecha = $$("#fechaAltaMovimiento").val();
   observaciones = $$("#observacionesMovimiento").val();
   movimiento = $$("#tipoMovimiento").val();
@@ -1126,8 +1155,8 @@ function funcionFinAltaMovimiento() {
       console.log("Error " + error);
     });
   }
-  if (fecha !== "" && observaciones !== "" && monto !== "" && movimiento !== "" && alumnoPago !== "" && cuota !== "" && formaPago !== "") {
-    datos = { fecha: fecha, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago, cuota: cuota, alumno: alumnoPago };
+  if (fecha !== "" && observaciones !== "" && monto !== "" && movimiento !== "" && alumnoPago !== "" && cuota !== "" && formaPago !== "" && conceptoEgreso !== "") {
+    datos = { fecha: fecha, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago, cuota: cuota, alumno: alumnoPago, conceptoEgreso: conceptoEgreso };
     coleccionMovimientos.add(datos)
     .then(function(documento) {
       app.dialog.alert("Movimiento creado exitosamente");
