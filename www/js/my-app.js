@@ -41,7 +41,8 @@ var app = new Framework7({
 
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
-var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clases, iD, autor, nombreSaludo, detalle, valor, codigo, cont;
+var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clases, iD, autor, nombreSaludo, detalle, valor, 
+codigo, cont, fechaDesde, fechaHasta;
 var coleccionUsuarios = db.collection("Usuarios");
 var coleccionClases = db.collection("Clases");
 var coleccionAlumnos = db.collection("Alumnos");
@@ -154,6 +155,7 @@ $$(document).on('page:init', '.page[data-name="caja"]', function (e) {
     $$(this).toggleClass('apretado');
     funcionActualizarFiltros();
   });
+  $$("#btnFiltros").on("click", funcionFiltros);
 })
 
 $$(document).on('page:init', '.page[data-name="altaMovimiento"]', function (e) {
@@ -941,13 +943,113 @@ function mostrarMovimientos() {
     } else {
       querySnapshot.forEach(function(documento) {
         fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
         monto = documento.data().monto;
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
         formaPago = documento.data().formaPago;
         cuerpo += `<tr>
-        <td class="label-cell">${fecha}</td>
+        <td class="label-cell">${fechaFormateada}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${alumno}</td>
+        <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${formaPago}</td>
+        <td class="label-cell">${observaciones}</td>
+        </tr>`;
+      })
+      $$("#movimientosCaja").html(inicio + cuerpo + fin);
+    }
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
+}
+
+function funcionFiltros () {
+  app.dialog.create({
+    title: 'Filtros',
+    content: `
+        <div class="list">
+            <ul>
+              <li class="item-content item-input">
+                <div class="item-inner">
+                  <div class="item-title item-label">Fecha desde</div>
+                  <div class="item-input-wrap">
+                    <input type="date" id="fechaDesde">
+                  </div>
+                </div>
+              </li>
+              <li class="item-content item-input">
+                <div class="item-inner">
+                  <div class="item-title item-label">Fecha hasta</div>
+                  <div class="item-input-wrap">
+                    <input type="date" id="fechaHasta">
+                  </div>
+                </div>
+              </li>
+            </ul>
+        </div>
+    `,
+    buttons: [
+        {
+            text: 'Aplicar',
+            onClick: function () {
+              fechaDesde = $$("#fechaDesde").val();
+              fechaHasta = $$("#fechaHasta").val();
+              aplicarFiltrosFecha();
+            }
+        },
+        {
+            text: 'Cancelar',
+            onClick: function () {
+            }
+        },
+    ]
+}).open();
+}
+
+function aplicarFiltrosFecha () {
+  var dateFechaDesde = Date.parse(fechaDesde);
+  var dateFechaHasta = Date.parse(fechaHasta);
+  var inicio, cuerpo, fin;
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Monto</th>
+                  <th class="label-cell">Alumno</th>
+                  <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Forma de pago</th>
+                  <th class="label-cell">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  query = coleccionMovimientos.where("fecha", ">=" , dateFechaDesde).where("fecha", "<=", dateFechaHasta);
+  query.get()
+  .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#movimientosCaja").html(`<p>No hay movimientos registrados</p>`);
+    } else {
+      querySnapshot.forEach(function(documento) {
+        fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
+        monto = documento.data().monto;
+        observaciones = documento.data().observaciones;
+        alumno = documento.data().alumno;
+        cuota = documento.data().cuota;
+        formaPago = documento.data().formaPago;
+        cuerpo += `<tr>
+        <td class="label-cell">${fechaFormateada}</td>
         <td class="label-cell">${monto}</td>
         <td class="label-cell">${alumno}</td>
         <td class="label-cell">${cuota}</td>
@@ -1133,6 +1235,7 @@ function cargarAlumnosMovimiento() {
 function funcionFinAltaMovimiento() {
   conceptoEgreso = $$("#conceptoEgreso").val();
   fecha = $$("#fechaAltaMovimiento").val();
+  var dateFechaMovimiento = Date.parse(fecha);
   observaciones = $$("#observacionesMovimiento").val();
   movimiento = $$("#tipoMovimiento").val();
   monto = $$("#montoMovimiento").val();
@@ -1146,7 +1249,7 @@ function funcionFinAltaMovimiento() {
   }
   if (movimiento === "Ingreso") {
     var subcoleccionPagos = coleccionPagos.doc(alumnoPago).collection("pagos");
-    datosPago = { fecha: fecha, monto: monto, cuota: cuota, observaciones: observaciones };
+    datosPago = { fecha: dateFechaMovimiento, monto: monto, cuota: cuota, observaciones: observaciones };
     subcoleccionPagos.add(datosPago)
     .then(function(documento) {
       console.log("pago creado correctamente");
@@ -1156,7 +1259,7 @@ function funcionFinAltaMovimiento() {
     });
   }
   if (fecha !== "" && observaciones !== "" && monto !== "" && movimiento !== "" && alumnoPago !== "" && cuota !== "" && formaPago !== "" && conceptoEgreso !== "") {
-    datos = { fecha: fecha, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago, cuota: cuota, alumno: alumnoPago, conceptoEgreso: conceptoEgreso };
+    datos = { fecha: dateFechaMovimiento, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago, cuota: cuota, alumno: alumnoPago, conceptoEgreso: conceptoEgreso };
     coleccionMovimientos.add(datos)
     .then(function(documento) {
       app.dialog.alert("Movimiento creado exitosamente");
