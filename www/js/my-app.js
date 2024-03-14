@@ -42,7 +42,7 @@ var app = new Framework7({
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
 var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clases, iD, autor, nombreSaludo, detalle, valor, 
-codigo, cont, fechaDesde, fechaHasta;
+codigo, cont, fechaDesde, fechaHasta, clase, club, idClase;
 var coleccionUsuarios = db.collection("Usuarios");
 var coleccionClases = db.collection("Clases");
 var coleccionAlumnos = db.collection("Alumnos");
@@ -70,6 +70,10 @@ $$(document).on('page:init', '.page[data-name="index"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="registro"]', function (e) {
+  $$("#clubRegistro").on("change", function() {
+    club = $$(this).val();
+    cargarClasesRegistro(club);
+  });
   $$("#btnFinalizarRegistro").on("click", funcionFinRegistro);
 })
 
@@ -81,7 +85,6 @@ $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
   funcionSaludoCoordinador();
   mostrarAlumnos();
   mostrarEntrenadores();
-  mostrarClases();
   mostrarInformes();
   mostrarCuotas();
   mostrarCaja();
@@ -245,14 +248,55 @@ function funcionRegistro () {
   }
 }
 
+function cargarClasesRegistro (club) {
+  console.log(club);
+  var lista = `<option value="" disabled selected>Seleccionar...</option>`;
+  var subcoleccionClases = coleccionClases.doc(club).collection('clases');
+  console.log(subcoleccionClases, " ", club);
+  subcoleccionClases.get()
+  .then(function (querySnapshot) {
+    querySnapshot.forEach(function (documento) {
+      nombre = documento.data().nombre;
+      console.log(nombre);
+      lista += `<option value='${nombre}'>${nombre}</option>`
+    });
+
+    $$("#claseRegistro").html(lista);
+  })
+  .catch(function (error) {
+    console.log("Error: ", error);
+  });
+}
+
 function funcionFinRegistro () {
   var idUsuario = email;
   nombre = $$("#nombreRegistro").val();
   apellido = $$("#apellidoRegistro").val();
   telefono = $$("#telefonoRegistro").val();
   fechaNacimiento = $$("#fechaNacimientoRegistro").val();
+  club = $$("#clubRegistro").val();
+  clase = $$("#claseRegistro").val();
   tipoUsuario = $$("#tipoUsuarioRegistro").val();
-  datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario};
+  datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario, club: club, clase: clase};
+  switch (tipoUsuario){
+    case "Alumno": coleccionAlumnos.doc(email).set({clase: clase})
+    .then(function (documento) {
+      console.log("alumno creado");
+    })
+    .catch( function (error) {
+      console.log("Error " + error);
+    });
+    break;
+    case "Entrenador": coleccionEntrenadores.doc(email).set({clase: clase})
+    .then(function (documento) {
+      console.log("entrenador creado");
+    })
+    .catch( function (error) {
+      console.log("Error " + error);
+    });
+    break;
+    default:
+  }
   coleccionUsuarios.doc(idUsuario).set(datos)
   .then(function (documento) {
     app.dialog.alert("Usuario registrado");
@@ -303,9 +347,11 @@ function funcionSaludoCoordinador () {
     querySnapshot.forEach(function(documento) {
       if (documento.id == email) {
         nombreSaludo = documento.data().nombre;
+        club = documento.data().club;
       }
     });
     $$("#saludoCoordinador").html("Hola " + nombreSaludo + "!");
+    mostrarClases(club);
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -416,7 +462,7 @@ function agregarNuevoSelect() {
   var i = 1;
   if (cont <= 5) {
     var lista = "";
-    coleccionClases.get()
+    coleccionClases.doc(club).collection("clases").get()
     .then(function(querySnapshot) {
       querySnapshot.forEach(function(documento) {
           var nombreClase = documento.data().nombre;
@@ -453,15 +499,18 @@ function agregarNuevoSelect() {
 function verificarClasesAsignadas(id) {
   coleccionAlumnos.doc(id).get()
   .then(function(documento) {
-      if (documento.exists && documento.data().clase && documento.data().clase.length > 0) {
-        cont = documento.data().clase.length;
-        clasesAsignadas = documento.data().clase;
-        for (var i=0; i<cont; i++) {
-          generarSelect(clasesAsignadas[i], i+1);
-        }
-      } else {
-        cont = 0;
+    console.log(documento.data());
+    if (documento.exists && documento.data().clase && documento.data().clase.length > 0) {
+      console.log("entra porque encontró");
+      cont = documento.data().clase.length;
+      clasesAsignadas = documento.data().clase;
+      for (var i=0; i<cont; i++) {
+        generarSelect(clasesAsignadas[i], i+1);
       }
+    } else {
+      cont = 0;
+      console.log("no encontró");
+    }
   })
   .catch(function(error) {
       console.log("Error: ", error);
@@ -679,7 +728,7 @@ function confirmarBorrarEntrenador (id) {
   });
 }
 
-function mostrarClases () {
+function mostrarClases (club) {
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
             <table>
@@ -695,16 +744,17 @@ function mostrarClases () {
   fin = `</tbody>
             </table>
           </div>`;
-  coleccionClases.get()
+  var subcoleccionClases = coleccionClases.doc(club).collection('clases');
+  subcoleccionClases.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
       $$("#clasesCoordinador").html(`<p>No hay clases creadas</p>`);
     } else {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
-      codigo = doc.id;
+      idClase = doc.id;
       cuerpo += `<tr>
-      <td class="label-cell">${codigo}</td>
+      <td class="label-cell">${idClase}</td>
       <td class="label-cell">${nombre}</td>
       <td class="label-cell divBotones"><button onclick="editarClase('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
       <button onclick="borrarClase('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
@@ -720,12 +770,11 @@ function mostrarClases () {
 
 function editarClase (id) {
   mainView.router.navigate("/coordinador/editarClase/");
-  coleccionClases.doc(id).get()
+  coleccionClases.doc(club).collection("clases").doc(id).get()
   .then(function(clase) {
     $$("#nombreEditarClase").val(clase.data().nombre);
-
     var diasSeleccionados = clase.data().dias;
-
+    idClase = id;
     $$("input[type='checkbox']").each(function () {
       var checkbox = $$(this);
       var dia = checkbox.val();
@@ -744,13 +793,11 @@ function editarClase (id) {
 function funcionFinEditarClase () {
   var diasSeleccionados = [];
   nombre = $$("#nombreEditarClase").val();
-
   $$("input[type='checkbox']:checked").each(function() {
     var dia = $$(this).val();
     diasSeleccionados.push(dia);
   });
-
-  coleccionClases.doc(codigo).update({nombre: nombre, dias: diasSeleccionados})
+  coleccionClases.doc(club).collection("clases").doc(idClase).update({nombre: nombre, dias: diasSeleccionados})
   .then(function (documento) {
     app.dialog.alert("Clase editada");
     mainView.router.navigate("/coordinador/");
@@ -767,10 +814,10 @@ function borrarClase(id) {
 }
 
 function confirmarBorrarClase (id) {
-  coleccionClases.doc(id).delete()
+  coleccionClases.doc(club).collection("clases").doc(id).delete()
   .then(function() {
     app.dialog.alert("Clase eliminada");
-    mostrarClases();
+    mostrarClases(club);
   })
   .catch(function(error) {
     console.log("Error: ", error);
@@ -1369,25 +1416,23 @@ function funcionCrearEntrenador () {
 
 function funcionCrearClase () {
   var diasSeleccionados = [];
-  var codigo = $$("#codigoAltaClase").val();
+  idClase = $$("#codigoAltaClase").val();
   nombre = $$("#nombreAltaClase").val();
-
   $$("input[type='checkbox']:checked").each(function() {
     var dia = $$(this).val();
     diasSeleccionados.push(dia);
   });
-
   if (nombre != "" && diasSeleccionados.length != 0 && codigo != "") {
-    var idClase = codigo;
+    var subcoleccionClases = coleccionClases.doc(club).collection("clases");
     datos = {nombre: nombre, dias: diasSeleccionados};
-    coleccionClases.doc(idClase).set(datos)
-    .then(function (documento) {
+    subcoleccionClases.doc(idClase).set(datos)
+    .then(function(documento) {
       app.dialog.alert("Clase creada exitosamente");
       mainView.router.navigate("/coordinador/");
     })
     .catch( function (error) {
       console.log("Error " + error);
-    })
+    });
   }
 }
 
