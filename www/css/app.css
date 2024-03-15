@@ -860,7 +860,7 @@ a {
   height: 80px;
 }
 
-#btnFiltrarIngresos.apretado, #btnFiltrarEgresos.apretado {
+#btnFiltrarIngresos.apretado, #btnFiltrarEgresos.apretado, #btnFiltrarEfectivo.apretado, #btnFiltrarTransferencia.apretado {
   background-color: lightgray;
 }
 
@@ -869,7 +869,7 @@ a {
   margin: auto;
 }
 
-#btnFiltrarIngresos, #btnFiltrarEgresos, #btnAgregarClaseAlumno, #btnFinalizarEditarAlumno, #btnFiltros {
+#btnFiltrarIngresos, #btnFiltrarEgresos, #btnAgregarClaseAlumno, #btnFinalizarEditarAlumno, #btnFiltros, #btnFiltrarEfectivo, #btnFiltrarTransferencia {
   margin: 5px;
 }
 
