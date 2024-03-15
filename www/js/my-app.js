@@ -158,6 +158,16 @@ $$(document).on('page:init', '.page[data-name="caja"]', function (e) {
     $$(this).toggleClass('apretado');
     funcionActualizarFiltros();
   });
+  $$("#btnFiltrarEfectivo").on("click", function() {
+    $$("#btnFiltrarTransferencia").removeClass('apretado');
+    $$(this).toggleClass('apretado');
+    funcionActualizarFiltros();
+  });
+  $$("#btnFiltrarTransferencia").on("click", function() {
+    $$("#btnFiltrarEfectivo").removeClass('apretado');
+    $$(this).toggleClass('apretado');
+    funcionActualizarFiltros();
+  });
   $$("#btnFiltros").on("click", funcionFiltros);
 })
 
@@ -415,21 +425,28 @@ function verAlumno (alumno) {
           </div>`;
   subcoleccionPagos.get()
   .then(function (querySnapshot) {
-    querySnapshot.forEach(function (documento) {
-      fecha = documento.data().fecha;
-      monto = documento.data().monto;
-      cuota = documento.data().cuota;
-      observaciones = documento.data().observaciones;
-      cuerpo += `<tr>
-      <td class="label-cell">${alumno}</td>
-      <td class="label-cell">${fecha}</td>
-      <td class="label-cell">${cuota}</td>
-      <td class="label-cell">${monto}</td>
-      <td class="label-cell">${observaciones}</td>
-      </tr>`
-    })
+    if (querySnapshot.size === 0) {
+      $$("#pagosAlumno").html(`<p>No hay pagos registrados</p>`);
+    } else {
+      querySnapshot.forEach(function (documento) {
+        fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
+        monto = documento.data().monto;
+        cuota = documento.data().cuota;
+        observaciones = documento.data().observaciones;
+        cuerpo += `<tr>
+        <td class="label-cell">${alumno}</td>
+        <td class="label-cell">${fechaFormateada}</td>
+        <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${observaciones}</td>
+        </tr>`
+      })
+      $$("#pagosAlumno").html(inicio + cuerpo + fin);
+    }
     $$("#nombreAlumno").html("Pagos de " + alumno);
-    $$("#pagosAlumno").html(inicio + cuerpo + fin);
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -1136,38 +1153,121 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
   fin = `</tbody>
             </table>
           </div>`;
-  var query = coleccionMovimientos.where("tipo", "==", tipoMovimiento);
-  query.get()
+    var query = coleccionMovimientos.where("tipo", "==", tipoMovimiento);
+    query.get()
+    .then(function(querySnapshot) {
+      if (querySnapshot.size === 0) {
+        $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
+      } else {
+      querySnapshot.forEach(function(documento) {
+          fecha = documento.data().fecha;
+          var nuevaFecha = new Date(fecha);
+          nuevaFecha.setUTCHours(0, 0, 0, 0);
+          var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
+          monto = documento.data().monto;
+          observaciones = documento.data().observaciones;
+          alumno = documento.data().alumno;
+          cuota = documento.data().cuota;
+          formaPago = documento.data().formaPago;
+          conceptoEgreso = documento.data().conceptoEgreso;
+          if (tipoMovimiento === "Egreso") {
+            cuerpo += `<tr>
+            <td class="label-cell">${fechaFormateada}</td>
+            <td class="label-cell">${conceptoEgreso}</td>
+            <td class="label-cell">${monto}</td>
+            <td class="label-cell">${formaPago}</td>
+            <td class="label-cell">${observaciones}</td>
+            </tr>`;
+          } else {
+            cuerpo += `<tr>
+            <td class="label-cell">${fechaFormateada}</td>
+            <td class="label-cell">${monto}</td>
+            <td class="label-cell">${alumno}</td>
+            <td class="label-cell">${cuota}</td>
+            <td class="label-cell">${formaPago}</td>
+            <td class="label-cell">${observaciones}</td>
+            </tr>`;
+          }
+      })
+      $$("#movimientosCaja").html(inicio + cuerpo + fin);
+    }
+    })
+    .catch(function(error) {
+      console.log("Error: ", error);
+    });
+}
+
+function funcionActualizarFiltros () {
+  var filtroIngresos = $$("#btnFiltrarIngresos").hasClass('apretado');
+  var filtroEgresos = $$("#btnFiltrarEgresos").hasClass('apretado');
+  var filtroEfectivo = $$("#btnFiltrarEfectivo").hasClass('apretado');
+  var filtroTransferencia = $$("#btnFiltrarTransferencia").hasClass('apretado');
+  if (filtroIngresos) {
+    if (filtroEfectivo) {
+      funcionFiltrarIngresos("Efectivo");
+    } else if (filtroTransferencia) {
+      funcionFiltrarIngresos("Transferencia");
+    } else {
+      funcionFiltrarMovimientos("Ingreso");
+    }
+  } else if (filtroEgresos) {
+    if (filtroEfectivo) {
+      funcionFiltrarEgresos("Efectivo");
+    } else if (filtroTransferencia) {
+      funcionFiltrarEgresos("Transferencia");
+    } else {
+      funcionFiltrarMovimientos("Egreso");
+    }
+  } else if (filtroEfectivo) {
+    funcionFiltrarEfectivo();
+  } else if (filtroTransferencia) {
+    funcionFiltrarTransferencia();
+  } else {
+    mostrarMovimientos();
+  }
+}
+
+function funcionFiltrarIngresos (formaPago) {
+  inicio = `<div class="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="label-cell">Fecha</th>
+                    <th class="label-cell">Monto</th>
+                    <th class="label-cell">Alumno</th>
+                    <th class="label-cell">Cuota</th>
+                    <th class="label-cell">Forma de pago</th>
+                    <th class="label-cell">Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionMovimientos.where("tipo", "==", "Ingreso").where("formaPago", "==", formaPago).get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
       $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
         fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
         monto = documento.data().monto;
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
         formaPago = documento.data().formaPago;
-        conceptoEgreso = documento.data().conceptoEgreso;
-        if (tipoMovimiento === "Egreso") {
-          cuerpo += `<tr>
-          <td class="label-cell">${fecha}</td>
-          <td class="label-cell">${conceptoEgreso}</td>
-          <td class="label-cell">${monto}</td>
-          <td class="label-cell">${formaPago}</td>
-          <td class="label-cell">${observaciones}</td>
-          </tr>`;
-        } else {
-          cuerpo += `<tr>
-          <td class="label-cell">${fecha}</td>
-          <td class="label-cell">${monto}</td>
-          <td class="label-cell">${alumno}</td>
-          <td class="label-cell">${cuota}</td>
-          <td class="label-cell">${formaPago}</td>
-          <td class="label-cell">${observaciones}</td>
-          </tr>`;
-        }
+        cuerpo += `<tr>
+        <td class="label-cell">${fechaFormateada}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${alumno}</td>
+        <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${formaPago}</td>
+        <td class="label-cell">${observaciones}</td>
+        </tr>`;
     })
     $$("#movimientosCaja").html(inicio + cuerpo + fin);
   }
@@ -1177,16 +1277,165 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
   });
 }
 
-function funcionActualizarFiltros () {
-  var filtroIngresos = $$("#btnFiltrarIngresos").hasClass('apretado');
-  var filtroEgresos = $$("#btnFiltrarEgresos").hasClass('apretado');
-  if (filtroEgresos) {
-    funcionFiltrarMovimientos("Egreso");
-  } else if (filtroIngresos) {
-    funcionFiltrarMovimientos("Ingreso");
-  } else {
-    mostrarMovimientos();
+function funcionFiltrarEgresos (formaPago) {
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Concepto</th>
+                  <th class="label-cell">Monto</th>
+                  <th class="label-cell">Forma de pago</th>
+                  <th class="label-cell">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionMovimientos.where("tipo", "==", "Egreso").where("formaPago", "==", formaPago).get()
+  .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
+    } else {
+    querySnapshot.forEach(function(documento) {
+        fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
+        monto = documento.data().monto;
+        observaciones = documento.data().observaciones;
+        alumno = documento.data().alumno;
+        cuota = documento.data().cuota;
+        formaPago = documento.data().formaPago;
+        conceptoEgreso = documento.data().conceptoEgreso;
+        cuerpo += `<tr>
+        <td class="label-cell">${fechaFormateada}</td>
+        <td class="label-cell">${conceptoEgreso}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${formaPago}</td>
+        <td class="label-cell">${observaciones}</td>
+        </tr>`;
+    })
+    $$("#movimientosCaja").html(inicio + cuerpo + fin);
   }
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
+}
+
+function funcionFiltrarEfectivo () {
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Concepto</th>
+                  <th class="label-cell">Monto</th>
+                  <th class="label-cell">Forma de pago</th>
+                  <th class="label-cell">Alumno</th>
+                  <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Observaciones</th>
+                  <th class="label-cell">Tipo movimiento</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionMovimientos.where("formaPago", "==", "Efectivo").get()
+  .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
+    } else {
+    querySnapshot.forEach(function(documento) {
+        fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
+        monto = documento.data().monto;
+        observaciones = documento.data().observaciones;
+        alumno = documento.data().alumno;
+        cuota = documento.data().cuota;
+        formaPago = documento.data().formaPago;
+        conceptoEgreso = documento.data().conceptoEgreso;
+        tipoMovimiento = documento.data().tipo;
+        cuerpo += `<tr>
+        <td class="label-cell">${fechaFormateada}</td>
+        <td class="label-cell">${conceptoEgreso}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${formaPago}</td>
+        <td class="label-cell">${alumno}</td>
+        <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${observaciones}</td>
+        <td class="label-cell">${tipoMovimiento}</td>
+        </tr>`;
+    })
+    $$("#movimientosCaja").html(inicio + cuerpo + fin);
+  }
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
+}
+
+function funcionFiltrarTransferencia () {
+  inicio = `<div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Concepto</th>
+                  <th class="label-cell">Monto</th>
+                  <th class="label-cell">Forma de pago</th>
+                  <th class="label-cell">Alumno</th>
+                  <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Observaciones</th>
+                  <th class="label-cell">Tipo movimiento</th>
+                </tr>
+              </thead>
+              <tbody>`;
+  cuerpo = ``;
+  fin = `</tbody>
+            </table>
+          </div>`;
+  coleccionMovimientos.where("formaPago", "==", "Transferencia").get()
+  .then(function(querySnapshot) {
+    if (querySnapshot.size === 0) {
+      $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
+    } else {
+    querySnapshot.forEach(function(documento) {
+        fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
+        monto = documento.data().monto;
+        observaciones = documento.data().observaciones;
+        alumno = documento.data().alumno;
+        cuota = documento.data().cuota;
+        formaPago = documento.data().formaPago;
+        conceptoEgreso = documento.data().conceptoEgreso;
+        tipoMovimiento = documento.data().tipo;
+        cuerpo += `<tr>
+        <td class="label-cell">${fechaFormateada}</td>
+        <td class="label-cell">${conceptoEgreso}</td>
+        <td class="label-cell">${monto}</td>
+        <td class="label-cell">${formaPago}</td>
+        <td class="label-cell">${alumno}</td>
+        <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${observaciones}</td>
+        <td class="label-cell">${tipoMovimiento}</td>
+        </tr>`;
+    })
+    $$("#movimientosCaja").html(inicio + cuerpo + fin);
+  }
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+  });
 }
 
 function funcionEsconderInputs () {
@@ -1227,31 +1476,6 @@ async function cargarCuotasMovimiento(alumno) {
     console.log("Error: ", error);
   }
 }
-
-// async function cargarCuotasMovimiento (alumno) {
-//   console.log("Tengo que cargar las cuotas de: ", alumno);
-//   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
-//   await coleccionAlumnos.doc(alumno).get()
-//   .then(function(documento) {
-//     clases = documento.data().clase;
-//     console.log(clases);
-//     for (i=0; i <= (clases.length -1); i++) {
-//       clase = clases[i];
-//       console.log("i = ", i, " clase es: ", clase);
-//       coleccionCuotas.where("clase", "==", clase).get()
-//       .then(function(querySnapshot){
-//         querySnapshot.forEach(function(documento){
-//           console.log(documento.id);
-//           lista += `<option value='${documento.id}'>${documento.id}</option>`;
-//         })
-//       })
-//     }
-//     $$("#cuotaMovimiento").append(lista);
-//   })
-//   .catch(function(error) {
-//     console.log("Error: " , error);
-//   });
-// }
 
 function funcionCuotaMovimiento (cuota) {
   coleccionCuotas.doc(cuota).get()
@@ -1716,7 +1940,7 @@ function mostrarEntrenadoresAlumno () {
   });
 }
 
-function mostrarPagosAlumno() {
+async function mostrarPagosAlumno() {
   var inicio, cuerpo, fin, nombreAlumno;
   inicio = `<div class="data-table">
             <table>
@@ -1733,26 +1957,29 @@ function mostrarPagosAlumno() {
   fin = `</tbody>
             </table>
           </div>`;
-  coleccionUsuarios.doc(email).get()
+  await coleccionUsuarios.doc(email).get()
   .then(function (documento) {
     nombre = documento.data().nombre;
     apellido = documento.data().apellido;
     nombreAlumno = nombre + " " + apellido;
-    var subcoleccionPagos = coleccionPagos.doc(nombreAlumno).collection('pagos');
-    return subcoleccionPagos.get();
   })
+  var subcoleccionPagos = coleccionPagos.doc(nombreAlumno).collection('pagos');
+  subcoleccionPagos.get()
   .then(function (querySnapshot) {
     if (querySnapshot.size === 0) {
       $$("#pagosDelAlumno").html(`<p>No hay pagos registrados</p>`);
     } else {
       querySnapshot.forEach(function (documento) {
         fecha = documento.data().fecha;
+        var nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(0, 0, 0, 0);
+        var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
         monto = documento.data().monto;
         cuota = documento.data().cuota;
         observaciones = documento.data().observaciones;
         cuerpo += `<tr>
           <td class="label-cell">${cuota}</td>
-          <td class="label-cell">${fecha}</td>
+          <td class="label-cell">${fechaFormateada}</td>
           <td class="label-cell">${monto}</td>
           <td class="label-cell">${observaciones}</td>
         </tr>`;
