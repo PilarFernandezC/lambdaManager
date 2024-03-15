@@ -168,12 +168,7 @@ $$(document).on('page:init', '.page[data-name="altaMovimiento"]', function (e) {
     var movimiento = $$(this).val();
     funcionTipoMovimiento(movimiento);
   });
-  $$("#alumnoMovimiento").on("change", function() {
-    var alumno = $$(this).val();
-    cargarCuotasMovimiento(alumno);
-    crearAlumnoPago(alumno);
-    $$("#inputCuotaMovimiento").show();
-  });
+  $$("#alumnoMovimiento").on("change", funcionAlumnoMovimiento)
   $$("#cuotaMovimiento").on("change", function() {
     var cuota = $$(this).val();
     funcionCuotaMovimiento(cuota);
@@ -249,15 +244,12 @@ function funcionRegistro () {
 }
 
 function cargarClasesRegistro (club) {
-  console.log(club);
   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
   var subcoleccionClases = coleccionClases.doc(club).collection('clases');
-  console.log(subcoleccionClases, " ", club);
   subcoleccionClases.get()
   .then(function (querySnapshot) {
     querySnapshot.forEach(function (documento) {
       nombre = documento.data().nombre;
-      console.log(nombre);
       lista += `<option value='${nombre}'>${nombre}</option>`
     });
 
@@ -277,7 +269,8 @@ function funcionFinRegistro () {
   club = $$("#clubRegistro").val();
   clase = $$("#claseRegistro").val();
   tipoUsuario = $$("#tipoUsuarioRegistro").val();
-  datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario, club: club, clase: clase};
+  clases = [clase];
+  datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario, club: club, clase: clases};
   switch (tipoUsuario){
     case "Alumno": coleccionAlumnos.doc(email).set({clase: clase})
     .then(function (documento) {
@@ -499,9 +492,7 @@ function agregarNuevoSelect() {
 function verificarClasesAsignadas(id) {
   coleccionAlumnos.doc(id).get()
   .then(function(documento) {
-    console.log(documento.data());
-    if (documento.exists && documento.data().clase && documento.data().clase.length > 0) {
-      console.log("entra porque encontró");
+    if (documento.exists) {
       cont = documento.data().clase.length;
       clasesAsignadas = documento.data().clase;
       for (var i=0; i<cont; i++) {
@@ -509,7 +500,6 @@ function verificarClasesAsignadas(id) {
       }
     } else {
       cont = 0;
-      console.log("no encontró");
     }
   })
   .catch(function(error) {
@@ -869,7 +859,7 @@ function mostrarCuotas () {
             <table>
               <thead>
                 <tr>
-                  <th class="label-cell">Clase</th>
+                  <th class="label-cell">Detalle</th>
                   <th class="label-cell">Valor</th>
                   <th class="label-cell">Acciones</th>
                 </tr>
@@ -1220,21 +1210,48 @@ function funcionTipoMovimiento (movimiento) {
   }
 }
 
-function cargarCuotasMovimiento (alumno) {
+async function cargarCuotasMovimiento(alumno) {
   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
-  coleccionAlumnos.doc(alumno).get()
-  .then(function(documento) {
-    clases = documento.data().clase;
-    for (i=0; i <= (clases.length -1); i++) {
-      nombreCuota = clases[i];
-      lista += `<option value='${nombreCuota}'>${nombreCuota}</option>`;
+  try {
+    const documento = await coleccionAlumnos.doc(alumno).get();
+    const clases = documento.data().clase;
+    for (let i = 0; i < clases.length; i++) {
+      const clase = clases[i];
+      const querySnapshot = await coleccionCuotas.where("clase", "==", clase).get();
+      querySnapshot.forEach(documento => {
+        lista += `<option value='${documento.id}'>${documento.id}</option>`;
+      });
     }
-    $$("#cuotaMovimiento").append(lista);
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
+    $$("#cuotaMovimiento").html(lista);
+  } catch (error) {
+    console.log("Error: ", error);
+  }
 }
+
+// async function cargarCuotasMovimiento (alumno) {
+//   console.log("Tengo que cargar las cuotas de: ", alumno);
+//   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
+//   await coleccionAlumnos.doc(alumno).get()
+//   .then(function(documento) {
+//     clases = documento.data().clase;
+//     console.log(clases);
+//     for (i=0; i <= (clases.length -1); i++) {
+//       clase = clases[i];
+//       console.log("i = ", i, " clase es: ", clase);
+//       coleccionCuotas.where("clase", "==", clase).get()
+//       .then(function(querySnapshot){
+//         querySnapshot.forEach(function(documento){
+//           console.log(documento.id);
+//           lista += `<option value='${documento.id}'>${documento.id}</option>`;
+//         })
+//       })
+//     }
+//     $$("#cuotaMovimiento").append(lista);
+//   })
+//   .catch(function(error) {
+//     console.log("Error: " , error);
+//   });
+// }
 
 function funcionCuotaMovimiento (cuota) {
   coleccionCuotas.doc(cuota).get()
@@ -1250,33 +1267,35 @@ function funcionCuotaMovimiento (cuota) {
   $$("#inputObservacionesMovimiento").show();
 }
 
-function cargarAlumnosMovimiento() {
-  var lista = `<option value="" disabled selected>Seleccionar...</option>`;
-  var consultasUsuarios = [];
-  coleccionAlumnos.get()
-    .then(function (querySnapshot) {
-      querySnapshot.forEach(function (documento) {
-        var mailAlumno = documento.id;
-        var consultaUsuario = coleccionUsuarios.doc(mailAlumno).get()
-          .then(function (documento) {
-            var nombre = documento.data().nombre;
-            var apellido = documento.data().apellido;
-            var nombreAlumno = nombre + " " + apellido;
-            lista += `<option value='${mailAlumno}'>${nombreAlumno}</option>`;
-          })
-          .catch(function (error) {
-            console.log("Error: ", error);
-          });
-        consultasUsuarios.push(consultaUsuario);
-      });
-      return Promise.all(consultasUsuarios);
+async function cargarAlumnosMovimiento() {
+  var lista = `<option value="" disabled selected>Seleccionar...</option>
+  <option value="Sin alumno">Sin alumno / otros ingresos</option>`;
+  coleccionUsuarios.where("rol", "==", "Alumno").get()
+  .then(function (querySnapshot) {
+    querySnapshot.forEach(function (documento) {
+      var nombre = documento.data().nombre;
+      var apellido = documento.data().apellido;
+      var nombreAlumno = nombre + " " + apellido;
+      lista += `<option value='${documento.id}'>${nombreAlumno}</option>`;
     })
-    .then(function () {
-      $$("#alumnoMovimiento").html(lista);
-    })
-    .catch(function (error) {
-      console.log("Error: ", error);
-    });
+    $$("#alumnoMovimiento").html(lista);
+  })
+  .catch(function (error) {
+    console.log("Error: ", error);
+  });
+}
+
+function funcionAlumnoMovimiento () {
+  var valor = $$(this).val();
+  if (valor == "Sin alumno") {
+    $$("#inputMontoMovimiento").show();
+    $$("#inputFormaPagoMovimiento").show();
+    $$("#inputObservacionesMovimiento").show();
+  } else {
+    cargarCuotasMovimiento(valor);
+    crearAlumnoPago(valor);
+    $$("#inputCuotaMovimiento").show();
+  }
 }
 
 function funcionFinAltaMovimiento() {
@@ -1294,7 +1313,12 @@ function funcionFinAltaMovimiento() {
     alumnoPago = "-";
     cuota = "-";
   }
+  if (alumno == "Sin alumno") {
+    cuota = "-";
+    alumno = "-";
+  }
   if (movimiento === "Ingreso") {
+    conceptoEgreso = "-";
     var subcoleccionPagos = coleccionPagos.doc(alumnoPago).collection("pagos");
     datosPago = { fecha: dateFechaMovimiento, monto: monto, cuota: cuota, observaciones: observaciones };
     subcoleccionPagos.add(datosPago)
@@ -1437,8 +1461,8 @@ function funcionCrearClase () {
 }
 
 function cargarClasesCuotas () {
-  var opcion;
-  coleccionClases.get()
+  var opcion = `<option value="" disabled selected>Seleccionar...</option>`;
+  coleccionClases.doc(club).collection("clases").get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(doc) {
       nombre = doc.data().nombre;
@@ -1454,10 +1478,10 @@ function cargarClasesCuotas () {
 function funcionCrearCuota () {
   clase = $$("#agregarClaseCuota").val();
   valor = $$("#valorAltaCuota").val();
-
-  if (clase != "" && valor != "") {
-    var idCuota = clase;
-    datos = {valor: valor};
+  detalle = $$("#detalleAltaCuota").val();
+  if (clase != "" && valor != "" && detalle != "") {
+    var idCuota = detalle;
+    datos = {valor: valor, clase: clase};
     coleccionCuotas.doc(idCuota).set(datos)
     .then(function (documento) {
       app.dialog.alert("Cuota creada exitosamente");
@@ -1476,6 +1500,7 @@ function funcionSaludoAlumno () {
     querySnapshot.forEach(function(documento) {
       if (documento.id == email) {
         nombreSaludo = documento.data().nombre;
+        club = documento.data().club;
       }
     });
     $$("#saludoAlumno").html("Hola " + nombreSaludo + "!");
@@ -1492,6 +1517,7 @@ function funcionSaludoEntrenador () {
     querySnapshot.forEach(function(documento) {
       if (documento.id == email) {
         nombreSaludo = documento.data().nombre;
+        club = documento.data().club;
       }
     });
     $$("#saludoEntrenador").html("Hola " + nombreSaludo + "!");
@@ -1501,84 +1527,62 @@ function funcionSaludoEntrenador () {
   });
 }
 
-function mostrarAlumnosEntrenador() {
+async function mostrarAlumnosEntrenador() {
   app.preloader.show();
-  coleccionEntrenadores.get()
-    .then(function(querySnapshot) {
-      querySnapshot.forEach(function(documento) {
-        if (documento.id === email) {
-          clase = documento.data().clase;
-        }
-      });
-      var inicio = `<div class="data-table">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th class="label-cell">Nombre</th>
-                              <th class="label-cell">Apellido</th>
-                              <th class="label-cell">Clase</th>
-                            </tr>
-                          </thead>
-                          <tbody>`;
-
-      var cuerpo = ``;
-      var fin = `</tbody>
-                    </table>
-                  </div>`;
-      coleccionAlumnos.where("clase", "==", clase).get()
-        .then(function(querySnapshot) {
-          var promesas = [];
-          querySnapshot.forEach(function(documento) {
-            var iD = documento.id;
-            var query = coleccionUsuarios.where("rol", "==", "Alumno").get();
-            promesas.push(
-              query.then(function(querySnapshot) {
-                querySnapshot.forEach(function(documento) {
-                  if (documento.id === iD) {
-                    nombre = documento.data().nombre;
-                    apellido = documento.data().apellido;
-                    cuerpo += `<tr>
-                                <td class="label-cell">${nombre}</td>
-                                <td class="label-cell">${apellido}</td>
-                                <td class="label-cell">${clase}</td>
-                              </tr>`;
-                  }
-                });
-              })
-            );
-          });
-          Promise.all(promesas)
-            .then(function() {
-              app.preloader.hide();
-              $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
-            })
-            .catch(function(error) {
-              console.log("Error: ", error);
-              app.preloader.hide();
-            });
-        })
-        .catch(function(error) {
-          console.log("Error: ", error);
-          app.preloader.hide();
-        });
-    })
-    .catch(function(error) {
-      console.log("Error: ", error);
-      app.preloader.hide();
-    });
-}
-
-function mostrarClasesEntrenador () {
-  coleccionEntrenadores.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.id == email) {
-        clase = documento.data().clase;
-      }
-    });
+  await coleccionEntrenadores.doc(email).get()
+  .then(function(documento) {
+    clase = documento.data().clase;
   })
   .catch(function(error) {
-    console.log("Error: " , error);
+    console.log("Error: ", error);
+  });
+  var inicio = `<div class="data-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th class="label-cell">Nombre</th>
+                          <th class="label-cell">Apellido</th>
+                          <th class="label-cell">Clase</th>
+                        </tr>
+                      </thead>
+                      <tbody>`;
+  var cuerpo = ``;
+  var fin = `</tbody>
+                </table>
+              </div>`;
+  var query = coleccionAlumnos.where("clase", "array-contains", clase)
+  query.get()
+  .then(function(querySnapshot) {
+    querySnapshot.forEach(function(documento) {
+      iD = documento.id;
+      coleccionUsuarios.doc(iD).get()
+      .then(function(documento) {
+        nombre = documento.data().nombre;
+        apellido = documento.data().apellido;
+        cuerpo += `<tr>
+                    <td class="label-cell">${nombre}</td>
+                    <td class="label-cell">${apellido}</td>
+                    <td class="label-cell">${clase}</td>
+                  </tr>`;
+        app.preloader.hide();
+        $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
+      });
+    })
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
+    app.preloader.hide();
+  });
+}
+
+async function mostrarClasesEntrenador () {
+  app.preloader.show();
+  await coleccionEntrenadores.doc(email).get()
+  .then(function(documento) {
+    clase = documento.data().clase;
+  })
+  .catch(function(error) {
+    console.log("Error: ", error);
   });
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
@@ -1594,17 +1598,16 @@ function mostrarClasesEntrenador () {
   fin = `</tbody>
             </table>
           </div>`;
-  coleccionClases.get()
+  var query = coleccionClases.doc(club).collection("clases").where("nombre", "==", clase)
+  query.get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(documento) {
-      if (documento.data().nombre == clase) {
-        nombre = documento.data().nombre;
-        codigo = documento.id;
-        cuerpo += `<tr>
-        <td class="label-cell">${codigo}</td>
-        <td class="label-cell">${nombre}</td>
-        </tr>`
-      }
+      nombre = documento.data().nombre;
+      codigo = documento.id;
+      cuerpo += `<tr>
+      <td class="label-cell">${codigo}</td>
+      <td class="label-cell">${nombre}</td>
+      </tr>`;
     })
     $$("#clasesEntrenador").html(inicio + cuerpo + fin);
   })
@@ -1629,24 +1632,28 @@ async function mostrarClasesAlumno() {
           </div>`;
   const documento = await coleccionAlumnos.doc(email).get();
   const clases = documento.data().clase;
-  for (var i = 0; i < clases.length; i++) {
-    var clase = clases[i];
-    var query = coleccionClases.where("nombre", "==", clase)
-    query.get()
-    .then(function(querySnapshot) {
-      querySnapshot.forEach(function(documento) {
-        nombre = documento.data().nombre;
-        codigo = documento.id;
-        cuerpo += `<tr>
-        <td class="label-cell">${codigo}</td>
-        <td class="label-cell">${nombre}</td>
-        </tr>`;
+  if (clases.length == 0) {
+    $$("#clasesAlumno").html(`<p>No estás tomando clases por el momento</p>`);
+  } else {
+    for (var i = 0; i < clases.length; i++) {
+      var clase = clases[i];
+      var query = coleccionClases.doc(club).collection("clases").where("nombre", "==", clase)
+      query.get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(function(documento) {
+          nombre = documento.data().nombre;
+          codigo = documento.id;
+          cuerpo += `<tr>
+          <td class="label-cell">${codigo}</td>
+          <td class="label-cell">${nombre}</td>
+          </tr>`;
+        })
+        $$("#clasesAlumno").html(inicio + cuerpo + fin);
       })
-      $$("#clasesAlumno").html(inicio + cuerpo + fin);
-    })
-    .catch(function(error) {
-      console.log("Error: " , error);
-    });
+      .catch(function(error) {
+        console.log("Error: " , error);
+      });
+    }
   }
 }
 
@@ -1726,7 +1733,6 @@ function mostrarPagosAlumno() {
   fin = `</tbody>
             </table>
           </div>`;
-
   coleccionUsuarios.doc(email).get()
   .then(function (documento) {
     nombre = documento.data().nombre;
@@ -1736,20 +1742,23 @@ function mostrarPagosAlumno() {
     return subcoleccionPagos.get();
   })
   .then(function (querySnapshot) {
-    querySnapshot.forEach(function (documento) {
-      fecha = documento.data().fecha;
-      monto = documento.data().monto;
-      cuota = documento.data().cuota;
-      observaciones = documento.data().observaciones;
-      cuerpo += `<tr>
-        <td class="label-cell">${cuota}</td>
-        <td class="label-cell">${fecha}</td>
-        <td class="label-cell">${monto}</td>
-        <td class="label-cell">${observaciones}</td>
-      </tr>`;
-    });
-
-    $$("#pagosDelAlumno").html(inicio + cuerpo + fin);
+    if (querySnapshot.size === 0) {
+      $$("#pagosDelAlumno").html(`<p>No hay pagos registrados</p>`);
+    } else {
+      querySnapshot.forEach(function (documento) {
+        fecha = documento.data().fecha;
+        monto = documento.data().monto;
+        cuota = documento.data().cuota;
+        observaciones = documento.data().observaciones;
+        cuerpo += `<tr>
+          <td class="label-cell">${cuota}</td>
+          <td class="label-cell">${fecha}</td>
+          <td class="label-cell">${monto}</td>
+          <td class="label-cell">${observaciones}</td>
+        </tr>`;
+      });
+      $$("#pagosDelAlumno").html(inicio + cuerpo + fin);
+    }
   })
   .catch(function (error) {
     console.log("Error: ", error);
@@ -1834,7 +1843,7 @@ function funcionCrearObjetivo () {
   });
 }
 
-function mostrarInformesEntrenador () {
+async function mostrarInformesEntrenador () {
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
             <table>
@@ -1849,31 +1858,25 @@ function mostrarInformesEntrenador () {
   fin = `</tbody>
             </table>
           </div>`;
-  coleccionUsuarios.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if(documento.id == email) {
-        nombre = documento.data().nombre;
-        apellido = documento.data().apellido;
-      }
-    })
+  await coleccionUsuarios.doc(email).get()
+  .then(function(documento) {
+    nombre = documento.data().nombre;
+    apellido = documento.data().apellido;
   })
   .catch(function(error) {
     console.log("Error: ", error);
   });
-  coleccionInformes.get()
+  coleccionInformes.where("autor", "==", (nombre + " " + apellido)).get()
   .then(function(querySnapshot) {
     querySnapshot.forEach(function(documento) {
-      if (documento.data().autor == (nombre + " " + apellido)) {
-        detalle = documento.data().detalle;
-        prioridad = documento.data().prioridad;
-        cuerpo += `<tr>
-                <td class="label-cell">${detalle}</td>
-                <td class="label-cell">${prioridad}</td>
-                </tr>`;
-      }
-      $$("#informesEntrenador").html(inicio + cuerpo + fin);
+      detalle = documento.data().detalle;
+      prioridad = documento.data().prioridad;
+      cuerpo += `<tr>
+              <td class="label-cell">${detalle}</td>
+              <td class="label-cell">${prioridad}</td>
+              </tr>`;
     })
+    $$("#informesEntrenador").html(inicio + cuerpo + fin);
   })
   .catch(function(error) {
     console.log("Error: " , error);
