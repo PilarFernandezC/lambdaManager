@@ -42,7 +42,7 @@ var app = new Framework7({
 var mainView = app.views.create('.view-main');
 var db = firebase.firestore();
 var email, contrasena, nombre, apellido, telefono, fechaNacimiento, tipoUsuario, dias, clases, iD, autor, nombreSaludo, detalle, valor, 
-codigo, cont, fechaDesde, fechaHasta, clase, club, idClase;
+codigo, cont, fechaDesde, fechaHasta, clase, club, idClase, mes;
 var coleccionUsuarios = db.collection("Usuarios");
 var coleccionClases = db.collection("Clases");
 var coleccionAlumnos = db.collection("Alumnos");
@@ -82,12 +82,20 @@ $$(document).on('page:init', '.page[data-name="registro1"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="coordinador"]', function (e) {
-  funcionSaludoCoordinador();
-  mostrarAlumnos();
-  mostrarEntrenadores();
-  mostrarInformes();
-  mostrarCuotas();
-  mostrarCaja();
+  app.preloader.show();
+  function cargarDatos() {
+    funcionSaludoCoordinador();
+    mostrarAlumnos();
+    mostrarEntrenadores();
+    mostrarInformes();
+    mostrarCuotas();
+    mostrarCaja();
+    cargarClasesCuotas();
+  }
+  cargarDatos();
+  $$(document).on('page:afterin', '.page[data-name="coordinador"]', function (e) {
+    app.preloader.hide();
+  });
   $$("#btnAltaAlumno").on("click", function() {
     mainView.router.navigate("/coordinador/altaAlumno/");
   });
@@ -188,11 +196,18 @@ $$(document).on('page:init', '.page[data-name="altaMovimiento"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
-  funcionSaludoAlumno();
-  mostrarClasesAlumno();
-  mostrarEntrenadoresAlumno();
-  mostrarObjetivosAlumno();
-  mostrarPagosAlumno();
+  app.preloader.show();
+  function cargarDatos() {
+    funcionSaludoAlumno();
+    mostrarClasesAlumno();
+    mostrarEntrenadoresAlumno();
+    mostrarObjetivosAlumno();
+    mostrarPagosAlumno();
+  }
+  cargarDatos();
+  $$(document).on('page:afterin', '.page[data-name="alumno"]', function (e) {
+    app.preloader.hide();
+  });
   $$("#btnAltaObjetivo").on("click", function() {
     mainView.router.navigate("/alumno/altaObjetivo/");
   });
@@ -204,11 +219,18 @@ $$(document).on('page:init', '.page[data-name="altaObjetivo"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="entrenador"]', function (e) {
-  funcionSaludoEntrenador();
-  mostrarAlumnosEntrenador();
-  mostrarInformesEntrenador();
-  mostrarObjetivosEntrenador();
-  mostrarClasesEntrenador();
+  app.preloader.show();
+  function cargarDatos() {
+    funcionSaludoEntrenador();
+    mostrarAlumnosEntrenador();
+    mostrarInformesEntrenador();
+    mostrarObjetivosEntrenador();
+    mostrarClasesEntrenador();
+  }
+  cargarDatos();
+  $$(document).on('page:afterin', '.page[data-name="entrenador"]', function (e) {
+    app.preloader.hide();
+  });
   $$("#btnAltaInforme").on("click", function() {
     mainView.router.navigate("/entrenador/altaInforme/");
   });
@@ -254,6 +276,7 @@ function funcionRegistro () {
 }
 
 function cargarClasesRegistro (club) {
+  app.preloader.show();
   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
   var subcoleccionClases = coleccionClases.doc(club).collection('clases');
   subcoleccionClases.get()
@@ -262,15 +285,17 @@ function cargarClasesRegistro (club) {
       nombre = documento.data().nombre;
       lista += `<option value='${nombre}'>${nombre}</option>`
     });
-
+    app.preloader.hide();
     $$("#claseRegistro").html(lista);
   })
   .catch(function (error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
 
 function funcionFinRegistro () {
+  app.preloader.show();
   var idUsuario = email;
   nombre = $$("#nombreRegistro").val();
   apellido = $$("#apellidoRegistro").val();
@@ -282,7 +307,7 @@ function funcionFinRegistro () {
   clases = [clase];
   datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario, club: club, clase: clases};
   switch (tipoUsuario){
-    case "Alumno": coleccionAlumnos.doc(email).set({clase: clase})
+    case "Alumno": coleccionAlumnos.doc(email).set({clase: clases})
     .then(function (documento) {
       console.log("alumno creado");
     })
@@ -290,7 +315,7 @@ function funcionFinRegistro () {
       console.log("Error " + error);
     });
     break;
-    case "Entrenador": coleccionEntrenadores.doc(email).set({clase: clase})
+    case "Entrenador": coleccionEntrenadores.doc(email).set({clase: clases})
     .then(function (documento) {
       console.log("entrenador creado");
     })
@@ -302,15 +327,18 @@ function funcionFinRegistro () {
   }
   coleccionUsuarios.doc(idUsuario).set(datos)
   .then(function (documento) {
+    app.preloader.hide();
     app.dialog.alert("Usuario registrado");
     mainView.router.navigate("/index/");
   })
   .catch( function (error) {
+    app.preloader.hide();
     console.log("Error " + error);
   });
 }
 
 function funcionLogin () {
+  app.preloader.show();
   email = $$("#emailLogin").val();
   contrasena = $$("#contrasenaLogin").val();
   if (email != "" && contrasena != "") {
@@ -332,6 +360,7 @@ function funcionLogin () {
     })
     })
     .catch((error) => {
+      app.preloader.hide();
       var errorCode = error.code;
       var errorMessage = error.message;
       switch (errorCode) {
@@ -405,6 +434,7 @@ function mostrarAlumnos () {
 
 function verAlumno (alumno) {
   mainView.router.navigate("/coordinador/verAlumno/");
+  app.preloader.show();
   var subcoleccionPagos = coleccionPagos.doc(alumno).collection('pagos');
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
@@ -414,6 +444,7 @@ function verAlumno (alumno) {
                   <th class="label-cell">Alumno</th>
                   <th class="label-cell">Fecha</th>
                   <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Mes cuota</th>
                   <th class="label-cell">Monto</th>
                   <th class="label-cell">Observaciones</th>
                 </tr>
@@ -426,6 +457,7 @@ function verAlumno (alumno) {
   subcoleccionPagos.get()
   .then(function (querySnapshot) {
     if (querySnapshot.size === 0) {
+      app.preloader.hide();
       $$("#pagosAlumno").html(`<p>No hay pagos registrados</p>`);
     } else {
       querySnapshot.forEach(function (documento) {
@@ -435,26 +467,31 @@ function verAlumno (alumno) {
         var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
         monto = documento.data().monto;
         cuota = documento.data().cuota;
+        mes = documento.data().mes;
         observaciones = documento.data().observaciones;
         cuerpo += `<tr>
         <td class="label-cell">${alumno}</td>
         <td class="label-cell">${fechaFormateada}</td>
         <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${mes}</td>
         <td class="label-cell">${monto}</td>
         <td class="label-cell">${observaciones}</td>
         </tr>`
       })
+      app.preloader.hide();
       $$("#pagosAlumno").html(inicio + cuerpo + fin);
     }
     $$("#nombreAlumno").html("Pagos de " + alumno);
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: " , error);
   });
 }
 
 function editarAlumno(id) {
   mainView.router.navigate("/coordinador/editarAlumno/");
+  app.preloader.show();
   email = id;
   coleccionUsuarios.doc(id).get()
   .then(function(alumno) {
@@ -462,8 +499,10 @@ function editarAlumno(id) {
     $$("#apellidoEditarAlumno").val(alumno.data().apellido);
     $$("#telefonoEditarAlumno").val(alumno.data().telefono);
     $$("#fechaNacimientoEditarAlumno").val(alumno.data().nacimiento);
+    app.preloader.hide();
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error ", error);
   });
 }
@@ -564,6 +603,7 @@ function asignarClasesAlumnos (id) {
 }
 
 function funcionFinAgregarClaseAlumno () {
+  app.preloader.show();
   clases = [];
   for (var i=1; i<=6; i++) {
     if (($$("#selectClase"+i).val()) != undefined) {
@@ -573,25 +613,30 @@ function funcionFinAgregarClaseAlumno () {
   }
   coleccionAlumnos.doc(email).set({clase: clases})
   .then(function() {
+    app.preloader.hide();
     app.dialog.alert("Clase asignada correctamente");
     mainView.router.navigate("/coordinador/");
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
 
 function funcionFinEditarAlumno () {
+  app.preloader.show();
   nombre = $$("#nombreEditarAlumno").val();
   apellido = $$("#apellidoEditarAlumno").val();
   telefono = $$("#telefonoEditarAlumno").val();
   fechaNacimiento = $$("#fechaNacimientoEditarAlumno").val();
   coleccionUsuarios.doc(email).update({nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento})
   .then(function (documento) {
+    app.preloader.hide();
     app.dialog.alert("Usuario editado");
     mainView.router.navigate("/coordinador/");
   })
   .catch( function (error) {
+    app.preloader.hide();
     console.log("Error " + error);
   });
 }
@@ -603,6 +648,7 @@ function borrarAlumno(id) {
 }
 
 function confirmarBorrarAlumno (id) {
+  app.preloader.show();
   coleccionAlumnos.doc(id).delete()
   .then(function() {
     console.log("borro el alumno");
@@ -612,10 +658,12 @@ function confirmarBorrarAlumno (id) {
   });
   coleccionUsuarios.doc(id).delete()
   .then(function() {
+    app.preloader.hide();
     app.dialog.alert("Alumno eliminado");
     mostrarAlumnos();
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
@@ -688,6 +736,7 @@ function editarEntrenador (id) {
 }
 
 function funcionFinEditarEntrenador () {
+  app.preloader.show();
   nombre = $$("#nombreEditarEntrenador").val();
   apellido = $$("#apellidoEditarEntrenador").val();
   telefono = $$("#telefonoEditarEntrenador").val();
@@ -703,10 +752,12 @@ function funcionFinEditarEntrenador () {
   });
   coleccionUsuarios.doc(email).update({nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento})
   .then(function (documento) {
+    app.preloader.hide();
     app.dialog.alert("Usuario editado");
     mainView.router.navigate("/coordinador/");
   })
   .catch( function (error) {
+    app.preloader.hide();
     console.log("Error " + error);
   });
 }
@@ -718,6 +769,7 @@ function borrarEntrenador(id) {
 }
 
 function confirmarBorrarEntrenador (id) {
+  app.preloader.show();
   coleccionEntrenadores.doc(id).delete()
   .then(function() {
     console.log("borro el entrenador");
@@ -727,10 +779,12 @@ function confirmarBorrarEntrenador (id) {
   });
   coleccionUsuarios.doc(id).delete()
   .then(function() {
+    app.preloader.hide();
     app.dialog.alert("Entrenador eliminado");
     mostrarEntrenadores();
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
@@ -798,6 +852,7 @@ function editarClase (id) {
 }
 
 function funcionFinEditarClase () {
+  app.preloader.show();
   var diasSeleccionados = [];
   nombre = $$("#nombreEditarClase").val();
   $$("input[type='checkbox']:checked").each(function() {
@@ -806,10 +861,12 @@ function funcionFinEditarClase () {
   });
   coleccionClases.doc(club).collection("clases").doc(idClase).update({nombre: nombre, dias: diasSeleccionados})
   .then(function (documento) {
+    app.preloader.hide();
     app.dialog.alert("Clase editada");
     mainView.router.navigate("/coordinador/");
   })
   .catch( function (error) {
+    app.preloader.hide();
     console.log("Error " + error);
   });
 }
@@ -821,12 +878,15 @@ function borrarClase(id) {
 }
 
 function confirmarBorrarClase (id) {
+  app.preloader.show();
   coleccionClases.doc(club).collection("clases").doc(id).delete()
   .then(function() {
+    app.preloader.hide();
     app.dialog.alert("Clase eliminada");
     mostrarClases(club);
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
@@ -922,15 +982,17 @@ function editarCuota (id) {
 }
 
 function funcionFinEditarCuota () {
+  app.preloader.hide();
   detalle = $$("#detalleEditarCuota").val();
   valor = $$("#valorEditarCuota").val();
-
   coleccionCuotas.doc(codigo).update({detalle: detalle, valor: valor})
   .then(function (documento) {
+    app.preloader.hide();
     app.dialog.alert("Cuota editada");
     mainView.router.navigate("/coordinador/");
   })
   .catch( function (error) {
+    app.preloader.hide();
     console.log("Error " + error);
   });
 }
@@ -942,12 +1004,15 @@ function borrarCuota(id) {
 }
 
 function confirmarBorrarCuota (id) {
+  app.preloader.show();
   coleccionCuotas.doc(id).delete()
   .then(function() {
+    app.preloader.hide();
     app.dialog.alert("Cuota eliminada");
     mostrarCuotas();
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
@@ -972,6 +1037,7 @@ function mostrarCaja () {
 }
 
 function mostrarMovimientos() {
+  app.preloader.show();
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
             <table>
@@ -981,6 +1047,7 @@ function mostrarMovimientos() {
                   <th class="label-cell">Monto</th>
                   <th class="label-cell">Alumno</th>
                   <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Mes</th>
                   <th class="label-cell">Forma de pago</th>
                   <th class="label-cell">Observaciones</th>
                 </tr>
@@ -993,6 +1060,7 @@ function mostrarMovimientos() {
   coleccionMovimientos.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
+      app.preloader.hide();
       $$("#movimientosCaja").html(`<p>No hay movimientos registrados</p>`);
     } else {
       querySnapshot.forEach(function(documento) {
@@ -1004,20 +1072,24 @@ function mostrarMovimientos() {
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
+        mes = documento.data().mes;
         formaPago = documento.data().formaPago;
         cuerpo += `<tr>
         <td class="label-cell">${fechaFormateada}</td>
         <td class="label-cell">${monto}</td>
         <td class="label-cell">${alumno}</td>
         <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${mes}</td>
         <td class="label-cell">${formaPago}</td>
         <td class="label-cell">${observaciones}</td>
         </tr>`;
       })
+      app.preloader.hide();
       $$("#movimientosCaja").html(inicio + cuerpo + fin);
     }
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
@@ -1066,6 +1138,7 @@ function funcionFiltros () {
 }
 
 function aplicarFiltrosFecha () {
+  app.preloader.show();
   var dateFechaDesde = Date.parse(fechaDesde);
   var dateFechaHasta = Date.parse(fechaHasta);
   var inicio, cuerpo, fin;
@@ -1077,6 +1150,7 @@ function aplicarFiltrosFecha () {
                   <th class="label-cell">Monto</th>
                   <th class="label-cell">Alumno</th>
                   <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Mes</th>
                   <th class="label-cell">Forma de pago</th>
                   <th class="label-cell">Observaciones</th>
                 </tr>
@@ -1090,6 +1164,7 @@ function aplicarFiltrosFecha () {
   query.get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
+      app.preloader.hide();
       $$("#movimientosCaja").html(`<p>No hay movimientos registrados</p>`);
     } else {
       querySnapshot.forEach(function(documento) {
@@ -1101,25 +1176,30 @@ function aplicarFiltrosFecha () {
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
+        mes = documento.data().mes;
         formaPago = documento.data().formaPago;
         cuerpo += `<tr>
         <td class="label-cell">${fechaFormateada}</td>
         <td class="label-cell">${monto}</td>
         <td class="label-cell">${alumno}</td>
         <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${mes}</td>
         <td class="label-cell">${formaPago}</td>
         <td class="label-cell">${observaciones}</td>
         </tr>`;
       })
+      app.preloader.hide();
       $$("#movimientosCaja").html(inicio + cuerpo + fin);
     }
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
 
 function funcionFiltrarMovimientos (tipoMovimiento) {
+  app.preloader.show();
   var inicio, cuerpo, fin;
   if (tipoMovimiento === "Egreso") {
     inicio = `<div class="data-table">
@@ -1143,6 +1223,7 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
                     <th class="label-cell">Monto</th>
                     <th class="label-cell">Alumno</th>
                     <th class="label-cell">Cuota</th>
+                    <th class="label-cell">Mes cuota</th>
                     <th class="label-cell">Forma de pago</th>
                     <th class="label-cell">Observaciones</th>
                   </tr>
@@ -1157,6 +1238,7 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
     query.get()
     .then(function(querySnapshot) {
       if (querySnapshot.size === 0) {
+        app.preloader.hide();
         $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
       } else {
       querySnapshot.forEach(function(documento) {
@@ -1168,6 +1250,7 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
           observaciones = documento.data().observaciones;
           alumno = documento.data().alumno;
           cuota = documento.data().cuota;
+          mes = documento.data().mes;
           formaPago = documento.data().formaPago;
           conceptoEgreso = documento.data().conceptoEgreso;
           if (tipoMovimiento === "Egreso") {
@@ -1184,15 +1267,18 @@ function funcionFiltrarMovimientos (tipoMovimiento) {
             <td class="label-cell">${monto}</td>
             <td class="label-cell">${alumno}</td>
             <td class="label-cell">${cuota}</td>
+            <td class="label-cell">${mes}</td>
             <td class="label-cell">${formaPago}</td>
             <td class="label-cell">${observaciones}</td>
             </tr>`;
           }
       })
+      app.preloader.hide();
       $$("#movimientosCaja").html(inicio + cuerpo + fin);
     }
     })
     .catch(function(error) {
+      app.preloader.hide();
       console.log("Error: ", error);
     });
 }
@@ -1228,6 +1314,7 @@ function funcionActualizarFiltros () {
 }
 
 function funcionFiltrarIngresos (formaPago) {
+  app.preloader.show();
   inicio = `<div class="data-table">
               <table>
                 <thead>
@@ -1236,6 +1323,7 @@ function funcionFiltrarIngresos (formaPago) {
                     <th class="label-cell">Monto</th>
                     <th class="label-cell">Alumno</th>
                     <th class="label-cell">Cuota</th>
+                    <th class="label-cell">Mes cuota</th>
                     <th class="label-cell">Forma de pago</th>
                     <th class="label-cell">Observaciones</th>
                   </tr>
@@ -1248,6 +1336,7 @@ function funcionFiltrarIngresos (formaPago) {
   coleccionMovimientos.where("tipo", "==", "Ingreso").where("formaPago", "==", formaPago).get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
+      app.preloader.hide();
       $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
@@ -1259,25 +1348,30 @@ function funcionFiltrarIngresos (formaPago) {
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
+        mes = documento.data().mes;
         formaPago = documento.data().formaPago;
         cuerpo += `<tr>
         <td class="label-cell">${fechaFormateada}</td>
         <td class="label-cell">${monto}</td>
         <td class="label-cell">${alumno}</td>
         <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${mes}</td>
         <td class="label-cell">${formaPago}</td>
         <td class="label-cell">${observaciones}</td>
         </tr>`;
     })
+    app.preloader.hide();
     $$("#movimientosCaja").html(inicio + cuerpo + fin);
   }
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
 
 function funcionFiltrarEgresos (formaPago) {
+  app.preloader.show();
   inicio = `<div class="data-table">
             <table>
               <thead>
@@ -1297,6 +1391,7 @@ function funcionFiltrarEgresos (formaPago) {
   coleccionMovimientos.where("tipo", "==", "Egreso").where("formaPago", "==", formaPago).get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
+      app.preloader.hide();
       $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
@@ -1318,15 +1413,18 @@ function funcionFiltrarEgresos (formaPago) {
         <td class="label-cell">${observaciones}</td>
         </tr>`;
     })
+    app.preloader.hide();
     $$("#movimientosCaja").html(inicio + cuerpo + fin);
   }
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
 
 function funcionFiltrarEfectivo () {
+  app.preloader.show();
   inicio = `<div class="data-table">
             <table>
               <thead>
@@ -1337,6 +1435,7 @@ function funcionFiltrarEfectivo () {
                   <th class="label-cell">Forma de pago</th>
                   <th class="label-cell">Alumno</th>
                   <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Mes cuota</th>
                   <th class="label-cell">Observaciones</th>
                   <th class="label-cell">Tipo movimiento</th>
                 </tr>
@@ -1349,6 +1448,7 @@ function funcionFiltrarEfectivo () {
   coleccionMovimientos.where("formaPago", "==", "Efectivo").get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
+      app.preloader.hide();
       $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
@@ -1360,6 +1460,7 @@ function funcionFiltrarEfectivo () {
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
+        mes = documento.data().mes;
         formaPago = documento.data().formaPago;
         conceptoEgreso = documento.data().conceptoEgreso;
         tipoMovimiento = documento.data().tipo;
@@ -1370,19 +1471,23 @@ function funcionFiltrarEfectivo () {
         <td class="label-cell">${formaPago}</td>
         <td class="label-cell">${alumno}</td>
         <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${mes}</td>
         <td class="label-cell">${observaciones}</td>
         <td class="label-cell">${tipoMovimiento}</td>
         </tr>`;
     })
+    app.preloader.hide();
     $$("#movimientosCaja").html(inicio + cuerpo + fin);
   }
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
 
 function funcionFiltrarTransferencia () {
+  app.preloader.show();
   inicio = `<div class="data-table">
             <table>
               <thead>
@@ -1393,6 +1498,7 @@ function funcionFiltrarTransferencia () {
                   <th class="label-cell">Forma de pago</th>
                   <th class="label-cell">Alumno</th>
                   <th class="label-cell">Cuota</th>
+                  <th class="label-cell">Mes cuota</th>
                   <th class="label-cell">Observaciones</th>
                   <th class="label-cell">Tipo movimiento</th>
                 </tr>
@@ -1405,6 +1511,7 @@ function funcionFiltrarTransferencia () {
   coleccionMovimientos.where("formaPago", "==", "Transferencia").get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
+      app.preloader.hide();
       $$("#movimientosCaja").html(`<p>No hay movimientos para mostrar</p>`);
     } else {
     querySnapshot.forEach(function(documento) {
@@ -1416,6 +1523,7 @@ function funcionFiltrarTransferencia () {
         observaciones = documento.data().observaciones;
         alumno = documento.data().alumno;
         cuota = documento.data().cuota;
+        mes = documento.data().mes;
         formaPago = documento.data().formaPago;
         conceptoEgreso = documento.data().conceptoEgreso;
         tipoMovimiento = documento.data().tipo;
@@ -1426,14 +1534,17 @@ function funcionFiltrarTransferencia () {
         <td class="label-cell">${formaPago}</td>
         <td class="label-cell">${alumno}</td>
         <td class="label-cell">${cuota}</td>
+        <td class="label-cell">${mes}</td>
         <td class="label-cell">${observaciones}</td>
         <td class="label-cell">${tipoMovimiento}</td>
         </tr>`;
     })
+    app.preloader.hide();
     $$("#movimientosCaja").html(inicio + cuerpo + fin);
   }
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
@@ -1445,6 +1556,7 @@ function funcionEsconderInputs () {
   $$("#inputMontoMovimiento").hide();
   $$("#inputObservacionesMovimiento").hide();
   $$("#inputFormaPagoMovimiento").hide();
+  $$("#inputMesMovimiento").hide();
 }
 
 function funcionTipoMovimiento (movimiento) {
@@ -1460,6 +1572,7 @@ function funcionTipoMovimiento (movimiento) {
 }
 
 async function cargarCuotasMovimiento(alumno) {
+  app.preloader.show();
   var lista = `<option value="" disabled selected>Seleccionar...</option>`;
   try {
     const documento = await coleccionAlumnos.doc(alumno).get();
@@ -1471,27 +1584,34 @@ async function cargarCuotasMovimiento(alumno) {
         lista += `<option value='${documento.id}'>${documento.id}</option>`;
       });
     }
+    app.preloader.hide();
     $$("#cuotaMovimiento").html(lista);
   } catch (error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   }
 }
 
 function funcionCuotaMovimiento (cuota) {
+  app.preloader.show();
   coleccionCuotas.doc(cuota).get()
   .then(function(documento) {
     monto = documento.data().valor;
     $$("#inputMontoMovimiento").show();
     $$("#montoMovimiento").val(monto);
+    app.preloader.hide();
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: " , error);
   });
+  $$("#inputMesMovimiento").show();
   $$("#inputFormaPagoMovimiento").show();
   $$("#inputObservacionesMovimiento").show();
 }
 
 async function cargarAlumnosMovimiento() {
+  app.preloader.show();
   var lista = `<option value="" disabled selected>Seleccionar...</option>
   <option value="Sin alumno">Sin alumno / otros ingresos</option>`;
   coleccionUsuarios.where("rol", "==", "Alumno").get()
@@ -1502,9 +1622,11 @@ async function cargarAlumnosMovimiento() {
       var nombreAlumno = nombre + " " + apellido;
       lista += `<option value='${documento.id}'>${nombreAlumno}</option>`;
     })
+    app.preloader.hide();
     $$("#alumnoMovimiento").html(lista);
   })
   .catch(function (error) {
+    app.preloader.hide();
     console.log("Error: ", error);
   });
 }
@@ -1523,6 +1645,7 @@ function funcionAlumnoMovimiento () {
 }
 
 function funcionFinAltaMovimiento() {
+  app.preloader.show();
   conceptoEgreso = $$("#conceptoEgreso").val();
   fecha = $$("#fechaAltaMovimiento").val();
   var dateFechaMovimiento = Date.parse(fecha);
@@ -1532,19 +1655,22 @@ function funcionFinAltaMovimiento() {
   alumno = $$("#alumnoMovimiento").val();
   formaPago = $$("#formaPagoMovimiento").val();
   cuota = $$("#cuotaMovimiento").val();
+  mes = $$("#mesCuota").val()
   if (movimiento === "Egreso") {
     monto = "-" + monto;
     alumnoPago = "-";
     cuota = "-";
+    mes = "-";
   }
   if (alumno == "Sin alumno") {
     cuota = "-";
     alumno = "-";
+    mes = "-";
   }
   if (movimiento === "Ingreso") {
     conceptoEgreso = "-";
     var subcoleccionPagos = coleccionPagos.doc(alumnoPago).collection("pagos");
-    datosPago = { fecha: dateFechaMovimiento, monto: monto, cuota: cuota, observaciones: observaciones };
+    datosPago = { fecha: dateFechaMovimiento, monto: monto, cuota: cuota, observaciones: observaciones, mes: mes };
     subcoleccionPagos.add(datosPago)
     .then(function(documento) {
       console.log("pago creado correctamente");
@@ -1554,13 +1680,15 @@ function funcionFinAltaMovimiento() {
     });
   }
   if (fecha !== "" && observaciones !== "" && monto !== "" && movimiento !== "" && alumnoPago !== "" && cuota !== "" && formaPago !== "" && conceptoEgreso !== "") {
-    datos = { fecha: dateFechaMovimiento, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago, cuota: cuota, alumno: alumnoPago, conceptoEgreso: conceptoEgreso };
+    datos = { fecha: dateFechaMovimiento, monto: monto, observaciones: observaciones, tipo: movimiento, formaPago: formaPago, cuota: cuota, alumno: alumnoPago, conceptoEgreso: conceptoEgreso, mes: mes };
     coleccionMovimientos.add(datos)
     .then(function(documento) {
+      app.preloader.hide();
       app.dialog.alert("Movimiento creado exitosamente");
       mainView.router.navigate("/coordinador/");
     })
     .catch( function (error) {
+      app.preloader.hide();
       console.log("Error " + error);
     });
   }
@@ -1581,7 +1709,6 @@ function crearAlumnoPago (alumno) {
 function funcionCrearAlumno () {
   email = $$("#emailAltaAlumno").val();
   contrasena = $$("#contrasenaAltaAlumno").val();
-
   if (email != "" && contrasena != "") {
     firebase.auth().createUserWithEmailAndPassword(email, contrasena)
     .then((userCredential) => {
@@ -1592,9 +1719,7 @@ function funcionCrearAlumno () {
       telefono = $$("#telefonoAltaAlumno").val();
       fechaNacimiento = $$("#fechaNacimientoAltaAlumno").val();
       tipoUsuario = "Alumno";
-
       datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario};
-
       coleccionUsuarios.doc(idUsuario).set(datos)
       .then(function (documento) {
         app.dialog.alert("Alumno creado exitosamente");
@@ -1623,7 +1748,6 @@ function funcionCrearAlumno () {
 function funcionCrearEntrenador () {
   email = $$("#emailAltaEntrenador").val();
   contrasena = $$("#contrasenaAltaEntrenador").val();
-
   if (email != "" && contrasena != "") {
     firebase.auth().createUserWithEmailAndPassword(email, contrasena)
     .then((userCredential) => {
@@ -1634,9 +1758,7 @@ function funcionCrearEntrenador () {
       telefono = $$("#telefonoAltaEntrenador").val();
       fechaNacimiento = $$("#fechaNacimientoAltaEntrenador").val();
       tipoUsuario = "Entrenador";
-
       datos = {nombre: nombre, apellido: apellido, telefono: telefono, nacimiento: fechaNacimiento, rol: tipoUsuario};
-
       coleccionUsuarios.doc(idUsuario).set(datos)
       .then(function (documento) {
         app.dialog.alert("Entrenador creado exitosamente");
@@ -1685,6 +1807,7 @@ function funcionCrearClase () {
 }
 
 function cargarClasesCuotas () {
+  app.preloader.show();
   var opcion = `<option value="" disabled selected>Seleccionar...</option>`;
   coleccionClases.doc(club).collection("clases").get()
   .then(function(querySnapshot) {
@@ -1692,14 +1815,17 @@ function cargarClasesCuotas () {
       nombre = doc.data().nombre;
       opcion += `<option value="${nombre}">${nombre}</option>`;
     });
+    app.preloader.hide();
     $$("#agregarClaseCuota").html(opcion);
   })
   .catch(function(error) {
+    app.preloader.hide();
     console.log("Error: " , error);
   });
 }
 
 function funcionCrearCuota () {
+  app.preloader.show();
   clase = $$("#agregarClaseCuota").val();
   valor = $$("#valorAltaCuota").val();
   detalle = $$("#detalleAltaCuota").val();
@@ -1708,10 +1834,12 @@ function funcionCrearCuota () {
     datos = {valor: valor, clase: clase};
     coleccionCuotas.doc(idCuota).set(datos)
     .then(function (documento) {
+      app.preloader.hide();
       app.dialog.alert("Cuota creada exitosamente");
       mainView.router.navigate("/coordinador/");
     })
     .catch( function (error) {
+      app.preloader.hide();
       console.log("Error " + error);
     })
   }
@@ -1752,7 +1880,6 @@ function funcionSaludoEntrenador () {
 }
 
 async function mostrarAlumnosEntrenador() {
-  app.preloader.show();
   await coleccionEntrenadores.doc(email).get()
   .then(function(documento) {
     clase = documento.data().clase;
@@ -1788,19 +1915,16 @@ async function mostrarAlumnosEntrenador() {
                     <td class="label-cell">${apellido}</td>
                     <td class="label-cell">${clase}</td>
                   </tr>`;
-        app.preloader.hide();
         $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
       });
     })
   })
   .catch(function(error) {
     console.log("Error: ", error);
-    app.preloader.hide();
   });
 }
 
 async function mostrarClasesEntrenador () {
-  app.preloader.show();
   await coleccionEntrenadores.doc(email).get()
   .then(function(documento) {
     clase = documento.data().clase;
@@ -1948,6 +2072,7 @@ async function mostrarPagosAlumno() {
                 <tr>
                   <th class="label-cell">Cuota</th>
                   <th class="label-cell">Fecha</th>
+                  <th class="label-cell">Mes cuota</th>
                   <th class="label-cell">Monto</th>
                   <th class="label-cell">Observaciones</th>
                 </tr>
@@ -1976,10 +2101,12 @@ async function mostrarPagosAlumno() {
         var fechaFormateada = `${nuevaFecha.getUTCFullYear()}-${(nuevaFecha.getUTCMonth() + 1).toString().padStart(2, '0')}-${nuevaFecha.getUTCDate().toString().padStart(2, '0')}`;
         monto = documento.data().monto;
         cuota = documento.data().cuota;
+        mes = documento.data().mes;
         observaciones = documento.data().observaciones;
         cuerpo += `<tr>
           <td class="label-cell">${cuota}</td>
           <td class="label-cell">${fechaFormateada}</td>
+          <td class="label-cell">${mes}</td>
           <td class="label-cell">${monto}</td>
           <td class="label-cell">${observaciones}</td>
         </tr>`;
@@ -2057,15 +2184,18 @@ function funcionAutorObjetivo () {
 }
 
 function funcionCrearObjetivo () {
+  app.preloader.show();
   var detalle;
   detalle = $$("#detalleAltaObjetivo").val();
   datos = {detalle: detalle, autor: autor};
   coleccionObjetivos.add(datos)
   .then(function (documento) {
+    app.preloader.hide();
     app.dialog.alert("Objetivo creado exitosamente");
     mainView.router.navigate("/alumno/");
   })
   .catch( function (error) {
+    app.preloader.hide();
     console.log("Error " + error);
   });
 }
@@ -2190,16 +2320,19 @@ function funcionAutorInforme () {
 }
 
 function funcionCrearInforme () {
+  app.preloader.show();
   var detalle, prioridad;
   detalle = $$("#detalleAltaInforme").val();
   prioridad = $$("#prioridadAltaInforme").val(); 
   datos = {detalle: detalle, prioridad: prioridad, autor: autor};
   coleccionInformes.add(datos)
   .then(function (documento) {
+    app.preloader.hide();
     app.dialog.alert("Informe creado exitosamente");
     mainView.router.navigate("/entrenador/");
   })
   .catch( function (error) {
+    app.preloader.hide();
     console.log("Error " + error);
   });
 }
