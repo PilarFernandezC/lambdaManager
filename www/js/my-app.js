@@ -214,7 +214,6 @@ $$(document).on('page:init', '.page[data-name="alumno"]', function (e) {
 })
 
 $$(document).on('page:init', '.page[data-name="altaObjetivo"]', function (e) {
-  funcionAutorObjetivo();
   $$("#btnFinalizarAltaObjetivo").on("click", funcionCrearObjetivo);
 })
 
@@ -2119,7 +2118,7 @@ async function mostrarPagosAlumno() {
   });
 }
 
-function mostrarObjetivosAlumno () {
+async function mostrarObjetivosAlumno () {
   var inicio, cuerpo, fin;
   inicio = `<div class="data-table">
             <table>
@@ -2133,32 +2132,27 @@ function mostrarObjetivosAlumno () {
   fin = `</tbody>
             </table>
           </div>`;
-  coleccionUsuarios.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if(documento.id == email) {
-        nombre = documento.data().nombre;
-        apellido = documento.data().apellido;
-      }
-    })
+  await coleccionUsuarios.doc(email).get()
+  .then(function(documento) {
+    nombre = documento.data().nombre;
+    apellido = documento.data().apellido;
+    autor = nombre + " " + apellido;
   })
   .catch(function(error) {
     console.log("Error: ", error);
   });
-  coleccionObjetivos.get()
+  await coleccionObjetivos.where("autor", "==", autor).get()
   .then(function(querySnapshot) {
     if (querySnapshot.size === 0) {
       $$("#objetivosAlumno").html(`<p>No hay objetivos creados</p>`);
     } else {
       querySnapshot.forEach(function(documento) {
-        if (documento.data().autor == (nombre + " " + apellido)) {
-          detalle = documento.data().detalle;
-          cuerpo += `<tr>
-                  <td class="label-cell">${detalle}</td>
-                  </tr>`;
-        }
-        $$("#objetivosAlumno").html(inicio + cuerpo + fin);
+        detalle = documento.data().detalle;
+        cuerpo += `<tr>
+                <td class="label-cell">${detalle}</td>
+                </tr>`;
       })
+      $$("#objetivosAlumno").html(inicio + cuerpo + fin);
     }
   })
   .catch(function(error) {
@@ -2166,25 +2160,17 @@ function mostrarObjetivosAlumno () {
   });
 }
 
-function funcionAutorObjetivo () {
-  coleccionUsuarios.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.id == email) {
-        nombre = documento.data().nombre;
-        apellido = documento.data().apellido;
-      }
-    })
+async function funcionCrearObjetivo () {
+  app.preloader.show();
+  await coleccionUsuarios.doc(email).get()
+  .then(function(documento) {
+    nombre = documento.data().nombre;
+    apellido = documento.data().apellido;
     autor = nombre + " " + apellido;
-    $$("#autorAltaObjetivo").val(autor);
   })
   .catch(function(error) {
     console.log("Error: " , error);
   });
-}
-
-function funcionCrearObjetivo () {
-  app.preloader.show();
   var detalle;
   detalle = $$("#detalleAltaObjetivo").val();
   datos = {detalle: detalle, autor: autor};
@@ -2225,15 +2211,19 @@ async function mostrarInformesEntrenador () {
   });
   coleccionInformes.where("autor", "==", (nombre + " " + apellido)).get()
   .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      detalle = documento.data().detalle;
-      prioridad = documento.data().prioridad;
-      cuerpo += `<tr>
-              <td class="label-cell">${detalle}</td>
-              <td class="label-cell">${prioridad}</td>
-              </tr>`;
-    })
-    $$("#informesEntrenador").html(inicio + cuerpo + fin);
+    if (querySnapshot.size === 0) {
+      $$("#informesEntrenador").html(`<p>No hay informes creados</p>`);
+    } else {
+      querySnapshot.forEach(function(documento) {
+        detalle = documento.data().detalle;
+        prioridad = documento.data().prioridad;
+        cuerpo += `<tr>
+                <td class="label-cell">${detalle}</td>
+                <td class="label-cell">${prioridad}</td>
+                </tr>`;
+      })
+      $$("#informesEntrenador").html(inicio + cuerpo + fin);
+    }
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -2262,7 +2252,7 @@ function mostrarObjetivosEntrenador() {
           clase = documento.data().clase;
         }
       });
-      return coleccionAlumnos.where("clase", "==", clase).get();
+      return coleccionAlumnos.where("clase", "array-contains", clase).get();
     })
     .then(function (querySnapshot) {
       var promesas = [];
@@ -2303,16 +2293,11 @@ function mostrarObjetivosEntrenador() {
 }
                 
 function funcionAutorInforme () {
-  coleccionUsuarios.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.id == email) {
-        nombre = documento.data().nombre;
-        apellido = documento.data().apellido;
-      }
-    })
+  coleccionUsuarios.doc(email).get()
+  .then(function(documento) {
+    nombre = documento.data().nombre;
+    apellido = documento.data().apellido;
     autor = nombre + " " + apellido;
-    $$("#autorAltaInforme").val(autor);
   })
   .catch(function(error) {
     console.log("Error: " , error);
