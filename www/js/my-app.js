@@ -67,6 +67,7 @@ $$(document).on('page:init', function (e) {
 // Option 2. Using live 'page:init' event handlers for each page
 $$(document).on('page:init', '.page[data-name="index"]', function (e) {
   $$("#btnLogin").on("click", funcionLogin);
+  console.log("Prueba error login");
 })
 
 $$(document).on('page:init', '.page[data-name="registro"]', function (e) {
