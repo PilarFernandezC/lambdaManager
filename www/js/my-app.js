@@ -418,9 +418,9 @@ function mostrarAlumnos () {
       cuerpo += `<tr>
       <td class="label-cell">${nombre}</td>
       <td class="label-cell">${apellido}</td>
-      <td class="label-cell divBotones"><button onclick="verAlumno('${alumno}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">eye</i></button><button onclick="editarAlumno('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
-      </button><button onclick="asignarClasesAlumnos('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">plus</i></button>
-      <button onclick="borrarAlumno('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
+      <td class="label-cell divBotones"><button onclick="verAlumno('${alumno}')" class="button button-raised button-fill botones"><i class="icon f7-icons">eye</i></button><button onclick="editarAlumno('${documento.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">pencil</i></button>
+      </button><button onclick="asignarClasesAlumnos('${documento.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">plus</i></button>
+      <button onclick="borrarAlumno('${documento.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#alumnosCoordinador").html(inicio + cuerpo + fin);
@@ -695,8 +695,8 @@ function mostrarEntrenadores () {
       cuerpo += `<tr>
       <td class="label-cell">${nombre}</td>
       <td class="label-cell">${apellido}</td>
-      <td class="label-cell divBotones"><button onclick="editarEntrenador('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
-      <button onclick="borrarEntrenador('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
+      <td class="label-cell divBotones"><button onclick="editarEntrenador('${doc.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarEntrenador('${doc.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#entrenadoresCoordinador").html(inicio + cuerpo + fin);
@@ -816,8 +816,8 @@ function mostrarClases (club) {
       cuerpo += `<tr>
       <td class="label-cell">${idClase}</td>
       <td class="label-cell">${nombre}</td>
-      <td class="label-cell divBotones"><button onclick="editarClase('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
-      <button onclick="borrarClase('${doc.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
+      <td class="label-cell divBotones"><button onclick="editarClase('${doc.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarClase('${doc.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#clasesCoordinador").html(inicio + cuerpo + fin);
@@ -956,8 +956,8 @@ function mostrarCuotas () {
       cuerpo += `<tr>
       <td class="label-cell">${clase}</td>
       <td class="label-cell">${valor}</td>
-      <td class="label-cell divBotones"><button onclick="editarCuota('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">pencil</i></button>
-      <button onclick="borrarCuota('${documento.id}')" class="button button-raised button-fill color-teal botones"><i class="icon f7-icons">trash</i></button></td>
+      <td class="label-cell divBotones"><button onclick="editarCuota('${documento.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">pencil</i></button>
+      <button onclick="borrarCuota('${documento.id}')" class="button button-raised button-fill botones"><i class="icon f7-icons">trash</i></button></td>
       </tr>`
     });
     $$("#cuotasCoordinador").html(inicio + cuerpo + fin);
@@ -1926,7 +1926,7 @@ async function mostrarAlumnosEntrenador() {
 async function mostrarClasesEntrenador () {
   await coleccionEntrenadores.doc(email).get()
   .then(function(documento) {
-    clase = documento.data().clase;
+    clases = documento.data().clase;
   })
   .catch(function(error) {
     console.log("Error: ", error);
@@ -1945,22 +1945,29 @@ async function mostrarClasesEntrenador () {
   fin = `</tbody>
             </table>
           </div>`;
-  var query = coleccionClases.doc(club).collection("clases").where("nombre", "==", clase)
-  query.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      nombre = documento.data().nombre;
-      codigo = documento.id;
-      cuerpo += `<tr>
-      <td class="label-cell">${codigo}</td>
-      <td class="label-cell">${nombre}</td>
-      </tr>`;
-    })
-    $$("#clasesEntrenador").html(inicio + cuerpo + fin);
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
+  if (clases.length == 0) {
+    $$("#clasesEntrenador").html(`<p>No estás dando clases por el momento</p>`);
+  } else {
+    for (var i = 0; i < clases.length; i++) {
+      var clase = clases[i];
+      var query = coleccionClases.doc(club).collection("clases").where("nombre", "==", clase)
+      query.get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(function(documento) {
+          nombre = documento.data().nombre;
+          codigo = documento.id;
+          cuerpo += `<tr>
+          <td class="label-cell">${codigo}</td>
+          <td class="label-cell">${nombre}</td>
+          </tr>`;
+        })
+        $$("#clasesEntrenador").html(inicio + cuerpo + fin);
+      })
+      .catch(function(error) {
+        console.log("Error: " , error);
+      });
+    }
+  }
 }
 
 async function mostrarClasesAlumno() {
