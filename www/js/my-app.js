@@ -1881,7 +1881,7 @@ function funcionSaludoEntrenador () {
 async function mostrarAlumnosEntrenador() {
   await coleccionEntrenadores.doc(email).get()
   .then(function(documento) {
-    clase = documento.data().clase;
+    clases = documento.data().clase;
   })
   .catch(function(error) {
     console.log("Error: ", error);
@@ -1900,27 +1900,34 @@ async function mostrarAlumnosEntrenador() {
   var fin = `</tbody>
                 </table>
               </div>`;
-  var query = coleccionAlumnos.where("clase", "array-contains", clase)
-  query.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      iD = documento.id;
-      coleccionUsuarios.doc(iD).get()
-      .then(function(documento) {
-        nombre = documento.data().nombre;
-        apellido = documento.data().apellido;
-        cuerpo += `<tr>
-                    <td class="label-cell">${nombre}</td>
-                    <td class="label-cell">${apellido}</td>
-                    <td class="label-cell">${clase}</td>
-                  </tr>`;
-        $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
-      });
+  for (i=0; i<clases.length; i++) {
+    clase = clases[i];
+    var query = coleccionAlumnos.where("clase", "array-contains", clase)
+    query.get()
+    .then(function(querySnapshot) {
+      if (querySnapshot.size === 0) {
+        $$("#alumnosEntrenador").html(`<p>No tenés alumnos por el momento</p>`);
+      } else {
+        querySnapshot.forEach(function(documento) {
+          iD = documento.id;
+          coleccionUsuarios.doc(iD).get()
+          .then(function(documento) {
+            nombre = documento.data().nombre;
+            apellido = documento.data().apellido;
+            cuerpo += `<tr>
+                        <td class="label-cell">${nombre}</td>
+                        <td class="label-cell">${apellido}</td>
+                        <td class="label-cell">${clase}</td>
+                      </tr>`;
+            $$("#alumnosEntrenador").html(inicio + cuerpo + fin);
+          });
+        })
+      }
     })
-  })
-  .catch(function(error) {
-    console.log("Error: ", error);
-  });
+    .catch(function(error) {
+      console.log("Error: ", error);
+    });
+  }
 }
 
 async function mostrarClasesEntrenador () {
@@ -2011,14 +2018,10 @@ async function mostrarClasesAlumno() {
   }
 }
 
-function mostrarEntrenadoresAlumno () {
-  coleccionAlumnos.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if (documento.id == email) {
-        clase = documento.data().clase;
-      }
-    });
+async function mostrarEntrenadoresAlumno () {
+  await coleccionAlumnos.doc(email).get()
+  .then(function(documento) {
+    clases = documento.data().clase;
   })
   .catch(function(error) {
     console.log("Error: " , error);
@@ -2038,36 +2041,34 @@ function mostrarEntrenadoresAlumno () {
   fin = `</tbody>
             </table>
           </div>`;
-  coleccionEntrenadores.get()
-  .then(function(querySnapshot) {
-    querySnapshot.forEach(function(documento) {
-      if ((documento.data().clase) == clase) {
-        iD = documento.id;
-        query = coleccionUsuarios.where("rol", "==", "Entrenador");
-        query.get()
-        .then(function(querySnapshot) {
-          querySnapshot.forEach(function(documento) {
-            if (documento.id == iD) {
-              nombre = documento.data().nombre;
-              apellido = documento.data().apellido;
-              cuerpo += `<tr>
-              <td class="label-cell">${nombre}</td>
-              <td class="label-cell">${apellido}</td>
-              <td class="label-cell">${clase}</td>
-              </tr>`
-            }
-          })
-          $$("#entrenadoresAlumno").html(inicio + cuerpo + fin);
+  for (i=0; i<clases.length; i++) {
+    clase = clases[i];
+    var query = coleccionEntrenadores.where("clase", "array-contains", clase)
+    query.get()
+    .then(function(querySnapshot) {
+      if (querySnapshot.size === 0) {
+        $$("#entrenadoresAlumno").html(`<p>No tenés entrenadores por el momento</p>`);
+      } else {
+        querySnapshot.forEach(function(documento) {
+          iD = documento.id;
+          coleccionUsuarios.doc(iD).get()
+          .then(function(documento) {
+            nombre = documento.data().nombre;
+            apellido = documento.data().apellido;
+            cuerpo += `<tr>
+                        <td class="label-cell">${nombre}</td>
+                        <td class="label-cell">${apellido}</td>
+                        <td class="label-cell">${clase}</td>
+                      </tr>`;
+            $$("#entrenadoresAlumno").html(inicio + cuerpo + fin);
+          });
         })
-        .catch(function(error) {
-          console.log("Error: " , error);
-        });
       }
+    })
+    .catch(function(error) {
+      console.log("Error: ", error);
     });
-  })
-  .catch(function(error) {
-    console.log("Error: " , error);
-  });
+  }
 }
 
 async function mostrarPagosAlumno() {
@@ -2237,7 +2238,38 @@ async function mostrarInformesEntrenador () {
   });
 }
 
-function mostrarObjetivosEntrenador() {
+async function mostrarObjetivosEntrenador() {
+  app.preloader.show();
+  var alumnos = [];
+  await coleccionEntrenadores.doc(email).get()
+  .then(function (documento) {
+    clases = documento.data().clase;
+  })
+  .catch(function (error) {
+    console.log("Error: ", error);
+  });
+  if (clases.length == 0) {
+    $$("#objetivosEntrenador").html(`<p>No hay objetivos creados por el momento</p>`);
+  } else {
+    for (var i = 0; i < clases.length; i++) {
+      var clase = clases[i];
+      await coleccionAlumnos.where("clase", "array-contains", clase).get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(async function(documento) {
+          var idAlumno = documento.id;
+          alumnos.push(idAlumno);
+        })
+        funcionFinMostrarObjetivosEntrenador(alumnos);
+      })
+      .catch(function(error) {
+        app.preloader.hide();
+        console.log("Error: " , error);
+      });
+    }
+  }
+}
+
+async function funcionFinMostrarObjetivosEntrenador (alumnos) {
   app.preloader.show();
   var inicio = `<div class="data-table">
                     <table>
@@ -2252,34 +2284,17 @@ function mostrarObjetivosEntrenador() {
   var fin = `</tbody>
                 </table>
               </div>`;
-  coleccionEntrenadores.get()
-    .then(function (querySnapshot) {
-      querySnapshot.forEach(function (documento) {
-        if (documento.id === email) {
-          clase = documento.data().clase;
-        }
-      });
-      return coleccionAlumnos.where("clase", "array-contains", clase).get();
-    })
-    .then(function (querySnapshot) {
-      var promesas = [];
-      querySnapshot.forEach(function(documento) {
-        var idAlumno = documento.id;
-        var alumnoPromesa = coleccionUsuarios.doc(idAlumno).get()
-          .then(function (documento) {
-            if (documento.exists) {
-              nombre = documento.data().nombre;
-              apellido = documento.data().apellido;
-              return coleccionObjetivos.where("autor", "==", nombre + " " + apellido).get();
-            }
-          });
-        promesas.push(alumnoPromesa);
-      });
-      return Promise.all(promesas);
-    })
-    .then(function(querySnapshot) {
-      querySnapshot.forEach(function (querySnapshot) {
-        if (querySnapshot) {
+  for (i=0; i<alumnos.length; i++) {
+    await coleccionUsuarios.doc(alumnos[i]).get()
+    .then(function(documento) {
+      nombre = documento.data().nombre;
+      apellido = documento.data().apellido;
+      autor = nombre + " " + apellido;
+      coleccionObjetivos.where("autor", "==", autor).get()
+      .then(function(querySnapshot) {
+        if (querySnapshot.size === 0) {
+          $$("#objetivosEntrenador").html(`<p>No hay objetivos creados por el momento</p>`);
+        } else {
           querySnapshot.forEach(function (documento) {
             var autor = documento.data().autor;
             var detalle = documento.data().detalle;
@@ -2288,15 +2303,20 @@ function mostrarObjetivosEntrenador() {
               <td class="label-cell">${detalle}</td>
             </tr>`;
           });
+          app.preloader.hide();
+          $$("#objetivosEntrenador").html(inicio + cuerpo + fin);
         }
+      })
+      .catch(function(error) {
+        app.preloader.hide();
+        console.log("Error: " , error);
       });
-      app.preloader.hide();
-      $$("#objetivosEntrenador").html(inicio + cuerpo + fin);
     })
-    .catch(function (error) {
-      console.log("Error: ", error);
+    .catch(function(error) {
       app.preloader.hide();
+      console.log("Error: " , error);
     });
+  }
 }
                 
 function funcionAutorInforme () {
